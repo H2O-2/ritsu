@@ -1,0 +1,28 @@
+{
+  "name": "ritsu",
+  "version": "0.0.2",
+  "description": "Static site generator made by TypeScript & Node.js",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "bin": {
+    "ritsu": "lib/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "run": "tsc; node lib/index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/H2O-2/Ritsu.git"
+  },
+  "author": "H2O2",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/H2O-2/Ritsu/issues"
+  },
+  "homepage": "https://github.com/H2O-2/Ritsu#readme",
+  "dependencies": {
+    "@types/commander": "^2.9.1",
+    "commander": "^2.11.0"
+  }
+}
