@@ -1,0 +1,1 @@
+import EjsParser from './ejsParser';
