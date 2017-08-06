@@ -1,8 +1,7 @@
 // Parse ejs to html string
 
-import * as path from 'path';
-
 import * as Ejs from 'ejs';
+import * as path from 'path';
 
 class EjsParser {
     private filePath: string;
@@ -16,7 +15,6 @@ class EjsParser {
             console.log(err || data);
         });
     }
-
 }
 
 export default EjsParser;

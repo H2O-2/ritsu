@@ -9,8 +9,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "run": "tsc; node lib/index",
-    "test": "tsc; node lib/engine/gen-ejs"
+    "run": "tsc; node dist/index",
+    "test": "tsc; node dist/engine/gen-ejs"
   },
   "repository": {
     "type": "git",

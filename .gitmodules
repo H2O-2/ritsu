@@ -1,0 +1,3 @@
+[submodule "themes/theme-notes"]
+	path = themes/theme-notes
+	url = https://github.com/H2O-2/theme-notes.git

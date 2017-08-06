@@ -44,7 +44,3 @@ Thumbs.db
 ######################
 bower_components/
 node_modules/
-
-# Theme #
-######################
-theme-notes/
