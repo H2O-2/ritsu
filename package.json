@@ -23,9 +23,11 @@
   },
   "homepage": "https://github.com/H2O-2/Ritsu#readme",
   "dependencies": {
+    "@types/bluebird": "^3.5.8",
     "@types/commander": "^2.9.1",
     "@types/ejs": "^2.3.33",
     "@types/node-sass": "^3.10.32",
+    "bluebird": "^3.5.0",
     "commander": "^2.11.0",
     "ejs": "^2.5.7",
     "node-sass": "^4.5.3"

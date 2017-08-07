@@ -4,15 +4,16 @@ import * as Ejs from 'ejs';
 import * as path from 'path';
 
 class EjsParser {
-    private filePath: string;
+    private fileRoot: string;
+    private outputPath: string;
 
-    constructor(filePath: string) {
-        this.filePath = filePath;
+    constructor(fileRoot: string, outputPath: string) {
+        this.fileRoot = fileRoot;
     }
 
-    public compile() {
-        Ejs.renderFile(path.join(__dirname, this.filePath), (err: Error, data: string) => {
-            console.log(err || data);
+    private renderFile(filePath: string): void {
+        Ejs.renderFile(path.join(this.fileRoot, filePath), (err: Error, data: string) => {
+            if (err) throw err.message;
         });
     }
 }

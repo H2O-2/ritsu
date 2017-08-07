@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+import * as process from 'process';
 
 const VER: string = 'v0.0.1';
 const DESCRIPTION: string = 'For Ritsu 📖\n\n  A simple static site generator.';
