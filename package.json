@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "run": "tsc; node dist/index",
-    "test": "tsc; node dist/engine/gen-ejs"
+    "test": "tsc; node dist/test"
   },
   "repository": {
     "type": "git",
@@ -26,10 +26,14 @@
     "@types/bluebird": "^3.5.8",
     "@types/commander": "^2.9.1",
     "@types/ejs": "^2.3.33",
+    "@types/js-yaml": "^3.9.0",
     "@types/node-sass": "^3.10.32",
     "bluebird": "^3.5.0",
     "commander": "^2.11.0",
+    "cross-spawn": "^5.1.0",
     "ejs": "^2.5.7",
-    "node-sass": "^4.5.3"
+    "js-yaml": "^3.9.1",
+    "node-sass": "^4.5.3",
+    "typescript": "^2.4.2"
   }
 }

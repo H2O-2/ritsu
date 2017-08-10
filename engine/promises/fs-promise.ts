@@ -4,7 +4,7 @@ import * as Promise from 'bluebird';
 import * as fs from 'fs';
 import * as url from 'url';
 
-export class NodeFs {
+export default class NodeFs {
     public static nodeReadFile = Promise.promisify(fs.readFile);
     public static nodeWriteFile = Promise.promisify(fs.writeFile);
     public static nodeUnlink = Promise.promisify(fs.unlink);

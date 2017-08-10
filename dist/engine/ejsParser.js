@@ -10,7 +10,7 @@ var EjsParser = (function () {
     EjsParser.prototype.renderFile = function (filePath) {
         Ejs.renderFile(path.join(this.fileRoot, filePath), function (err, data) {
             if (err)
-                throw err;
+                throw err.message;
         });
     };
     return EjsParser;
