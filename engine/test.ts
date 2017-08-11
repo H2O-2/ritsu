@@ -1,21 +1,14 @@
+import * as process from 'child_process';
+import * as spawn from 'cross-spawn';
+
 const invalidDate: string = 'hello';
 
 const dateObj = new Date(invalidDate);
 
 console.log(isNaN(dateObj.getDate()));
 
-var Promise = require("bluebird");
-
-var readFile = Promise.promisify(require("fs").readFile);
-
-import * as path from 'path';
-import * as yaml from 'js-yaml';
-
-import fs from './promises/fs-promise';
-import DefaultConfigs from './defaultConfigs';
-import EjsParser from './ejsParser';
-
-fs.nodeReadFile('./site-config.yaml', 'utf8').then((config) => {
-            const yamlOut = yaml.safeLoad(config);
-            console.log(yamlOut);
-        }).catch((err) => console.error('ERROR:', err));
+// var spawn = require('cross-spawn');
+const ls = spawn.sync('ls');
+console.log(ls);
+// const ls = process.spawn('ls');
+// ls.stdout.on('data', (data) => console.log(data));

@@ -1,18 +1,17 @@
 "use strict";
 // Parse ejs to html string
 Object.defineProperty(exports, "__esModule", { value: true });
-var Ejs = require("ejs");
-var path = require("path");
-var EjsParser = (function () {
-    function EjsParser(fileRoot, outputPath) {
+const Ejs = require("ejs");
+const path = require("path");
+class EjsParser {
+    constructor(fileRoot, outputPath) {
         this.fileRoot = fileRoot;
     }
-    EjsParser.prototype.renderFile = function (filePath) {
-        Ejs.renderFile(path.join(this.fileRoot, filePath), function (err, data) {
+    renderFile(filePath) {
+        Ejs.renderFile(path.join(this.fileRoot, filePath), (err, data) => {
             if (err)
                 throw err.message;
         });
-    };
-    return EjsParser;
-}());
+    }
+}
 exports.default = EjsParser;

@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "run": "tsc; node dist/index",
-    "test": "tsc; node dist/test"
+    "engine": "tsc; node dist/engine/engine",
+    "test": "tsc; node dist/engine/test"
   },
   "repository": {
     "type": "git",
@@ -23,12 +24,12 @@
   },
   "homepage": "https://github.com/H2O-2/Ritsu#readme",
   "dependencies": {
-    "@types/bluebird": "^3.5.8",
+    "@types/chalk": "^0.4.31",
     "@types/commander": "^2.9.1",
     "@types/ejs": "^2.3.33",
     "@types/js-yaml": "^3.9.0",
     "@types/node-sass": "^3.10.32",
-    "bluebird": "^3.5.0",
+    "chalk": "^2.1.0",
     "commander": "^2.11.0",
     "cross-spawn": "^5.1.0",
     "ejs": "^2.5.7",
