@@ -6,12 +6,14 @@ import * as process from 'process';
 import Constants from './constants';
 import EjsParser from './ejsParser';
 import Log from './logging';
-import fs from './promises/fs-promise';
+// import fs from './promises/fs-promise';
+import * as fs from 'fs-extra';
 
 class Engine {
     public ejsParser: EjsParser;
 
     private engineRootPath: string;
+    private defaultConfigPath: string;
     private rootPath: string;
     private archivePath: string;
     private postPath: string;
@@ -19,10 +21,10 @@ class Engine {
 
     constructor() {
         this.engineRootPath = path.join(__dirname, '../..');
+        this.defaultConfigPath = path.join(this.engineRootPath, Constants.DEFAULT_CONFIG_FILE);
 
         try {
-            this.defaultConfig = yaml.safeLoad(fs.readFileSync(path.join(this.engineRootPath,
-                                                                            Constants.DEFAULT_CONFIG_FILE), 'utf8'));
+            this.defaultConfig = yaml.safeLoad(fs.readFileSync(this.defaultConfigPath, 'utf8'));
             // console.log(this.defaultConfig);
             this.rootPath = path.join(process.cwd(), this.defaultConfig.rootDir);
         } catch (e) {
@@ -41,10 +43,10 @@ class Engine {
         this.archivePath = path.join(this.rootPath, this.defaultConfig.archiveDir);
         this.postPath = path.join(this.rootPath, this.defaultConfig.postDir);
 
-        fs.nodeMkdir('drafts')
-        .then(() => fs.nodeMkdir('templates'))
-        .then(() => fs.nodeMkdir('themes'))
-        // .then(() => spawn())
+        fs.mkdir('drafts')
+        .then(() => fs.mkdir('templates'))
+        .then(() => fs.mkdir('themes'))
+        .then(() => fs.copy(this.defaultConfigPath, path.join(this.rootPath, Constants.DEFAULT_CONFIG_FILE)))
         .catch((e) => Log.logErr(e.message));
     }
 }
