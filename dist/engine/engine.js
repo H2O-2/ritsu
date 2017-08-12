@@ -14,9 +14,12 @@ const logging_1 = require("./logging");
  */
 class Engine {
     constructor() {
+        this.postDir = 'posts/';
+        this.templateDir = 'template/';
+        this.themeDir = 'themes';
         this.engineRootPath = path.join(__dirname, '../..');
         this.defaultConfigPath = path.join(this.engineRootPath, constants_1.default.DEFAULT_CONFIG_FILE);
-        this.rootPath = process.cwd();
+        this.initFilePath = path.join(this.engineRootPath, 'init/');
         fs.readFile(this.defaultConfigPath, 'utf8')
             .then((fileContent) => this.defaultConfig = yaml.safeLoad(fileContent))
             .catch((e) => logging_1.default.logErr(e.message));
@@ -27,20 +30,13 @@ class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    init() {
-        if (fs.readdirSync(this.rootPath).length > 0) {
-            logging_1.default.logErr('Current directory not empty, please run this command in an empty folder');
-            return;
-        }
+    init(dirName = 'new-blog/') {
+        this.rootPath = path.join(process.cwd(), dirName);
         logging_1.default.logInfo('Initializing...');
         this.archivePath = path.join(this.rootPath, this.defaultConfig.archiveDir);
         this.postPath = path.join(this.rootPath, this.defaultConfig.postDir);
-        const defaultThemePath = path.join('themes', this.defaultConfig.theme);
-        fs.mkdir('drafts')
-            .then(() => fs.mkdir('templates'))
-            .then(() => fs.mkdir('themes'))
-            .then(() => fs.mkdir(defaultThemePath))
-            .then(() => fs.copy(this.defaultConfigPath, path.join(this.rootPath, constants_1.default.DEFAULT_CONFIG_FILE)))
+        const defaultThemePath = path.join(this.rootPath, this.themeDir, constants_1.default.DEFAULT_THEME);
+        fs.copy(this.initFilePath, this.rootPath)
             .then(() => spawn.sync('git', ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: 'inherit' }))
             .then(() => logging_1.default.logInfo('Blog successfully initialized! You can start writing :)'))
             .catch((e) => logging_1.default.logErr(e.message));

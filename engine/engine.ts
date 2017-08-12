@@ -41,15 +41,20 @@ class Engine {
 
     private engineRootPath: string;
     private defaultConfigPath: string;
+    private initFilePath: string;
     private rootPath: string;
     private archivePath: string;
     private postPath: string;
     private defaultConfig: SiteConfig;
 
+    private readonly postDir: string = 'posts/';
+    private readonly templateDir: string = 'template/';
+    private readonly themeDir: string = 'themes';
+
     constructor() {
         this.engineRootPath = path.join(__dirname, '../..');
         this.defaultConfigPath = path.join(this.engineRootPath, Constants.DEFAULT_CONFIG_FILE);
-        this.rootPath = process.cwd();
+        this.initFilePath = path.join(this.engineRootPath, 'init/');
 
         fs.readFile(this.defaultConfigPath, 'utf8')
         .then((fileContent: string) => this.defaultConfig = yaml.safeLoad(fileContent))
@@ -62,29 +67,28 @@ class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    public init(): void {
-        if (fs.readdirSync(this.rootPath).length > 0) {
-            Log.logErr('Current directory not empty, please run this command in an empty folder');
-            return;
-        }
+    public init(dirName: string = 'new-blog/'): void {
+        this.rootPath = path.join(process.cwd(), dirName);
 
         Log.logInfo('Initializing...');
 
         this.archivePath = path.join(this.rootPath, this.defaultConfig.archiveDir);
         this.postPath = path.join(this.rootPath, this.defaultConfig.postDir);
 
-        const defaultThemePath: string = path.join('themes', this.defaultConfig.theme);
+        const defaultThemePath: string = path.join(this.rootPath, this.themeDir, Constants.DEFAULT_THEME);
 
-        fs.mkdir('drafts')
-        .then(() => fs.mkdir('templates'))
-        .then(() => fs.mkdir('themes'))
-        .then(() => fs.mkdir(defaultThemePath))
-        .then(() => fs.copy(this.defaultConfigPath, path.join(this.rootPath, Constants.DEFAULT_CONFIG_FILE)))
+        fs.copy(this.initFilePath, this.rootPath)
         .then(() => spawn.sync('git', ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
                             { stdio: 'inherit' }))
         .then(() => Log.logInfo('Blog successfully initialized! You can start writing :)'))
         .catch((e: Error) => Log.logErr(e.message));
     }
+
+    // public newPost(postName: string, templateName: string = '', outputInfo: boolean = true): void {
+    //     if (templateName) {
+    //         fs.copy()
+    //     }
+    // }
 }
 
 const newEngine = new Engine();
