@@ -4,7 +4,6 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
 import * as process from 'process';
-import * as tildify from 'tildify';
 
 import Constants from './constants';
 import EjsParser from './ejsParser';
@@ -51,6 +50,7 @@ export default class Engine {
     private defaultConfigPath: string;
     private initFilePath: string;
     private rootPath: string;
+    private draftPath: string;
     private postPath: string;
     private templatePath: string;
     private themePath: string;
@@ -103,10 +103,19 @@ export default class Engine {
         });
     }
 
+    /**
+     *
+     * Create a new post inside posts folder.
+     *
+     * @param {string} postName
+     * @param {boolean} [outputInfo=true]
+     * @param {string} [templateName]
+     * @memberof Engine
+     */
     public newPost(postName: string, outputInfo: boolean = true, templateName?: string): void {
         this.readDb()
         .then(() => {
-            if (fs.pathExistsSync(path.join(this.postPath, `${postName}.md`))) {
+            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
                 throw new Error('Duplicate post name');
             }
         })
@@ -114,25 +123,50 @@ export default class Engine {
             if (outputInfo) Log.logInfo('Creating New Post...');
         })
         .then(() => {
-            fs.copySync(path.join(this.templatePath,
-                        templateName ? `${templateName}.md` : `${Constants.DEFAULT_TEMPLATE}.md`),
-                        path.join(this.postPath, `${postName}.md`));
+            const postPosn = path.join(this.draftPath, `${postName}.md`);
+
+            if (templateName) {
+                const templatePosn = path.join(this.templatePath, `${templateName}.md`);
+
+                if (fs.pathExistsSync(templatePosn)) {
+                    fs.copySync(templatePosn, postPosn);
+                } else {
+                    throw new Error(`Template '${templateName}' does not exist`);
+                }
+            } else {
+                const defaultTemplatePosn = path.join(this.templatePath, `${Constants.DEFAULT_TEMPLATE}.md`);
+
+                if (!fs.pathExistsSync(defaultTemplatePosn)) {
+                    fs.copySync(path.join(this.initFilePath, 'templates', `${Constants.DEFAULT_TEMPLATE}.md`),
+                                defaultTemplatePosn);
+                }
+
+                fs.copySync(defaultTemplatePosn, postPosn);
+            }
         })
         .then(() => {
             if (outputInfo) {
-                let newPostPath = tildify(path.relative(process.cwd(), this.postPath));
+                let newDraftPath = path.relative(process.cwd(), this.draftPath);
 
-                if (process.cwd() === this.postPath) {
-                    newPostPath = 'current directory';
+                if (process.cwd() === this.draftPath) {
+                    newDraftPath = 'current directory';
                 }
 
                 Log.logInfo(`New Post ${chalk.underline.black(postName)}` +
-                ` created at ${chalk.underline.black(`${newPostPath}`)}`);
+                ` created at ${chalk.underline.black(`${newDraftPath}`)}`);
             }
         })
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    /**
+     *
+     * Find and read the .db.json file in root directory of blog
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
             .then((path: string) => {
@@ -140,10 +174,6 @@ export default class Engine {
 
                 this.rootPath = path;
                 this.initFile(this.rootPath);
-            })
-            .catch((e: Error) => {
-                Log.logErr(e.message);
-                return;
             });
     }
 
@@ -156,12 +186,22 @@ export default class Engine {
      * @memberof Engine
      */
     private initFile(root: string): void {
+        this.draftPath = path.join(root, 'drafts');
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
     }
 
     // Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
+    /**
+     *
+     * Find .db.json file in current and parent directories.
+     *
+     * @private
+     * @param {string} curPath
+     * @returns {Promise<any>}
+     * @memberof Engine
+     */
     private findDb(curPath: string): Promise<any> {
         const dbPath = path.join(curPath, Constants.DB_FILE);
 

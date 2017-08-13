@@ -11,6 +11,7 @@ export default class Engine {
     private defaultConfigPath;
     private initFilePath;
     private rootPath;
+    private draftPath;
     private postPath;
     private templatePath;
     private themePath;
@@ -23,7 +24,24 @@ export default class Engine {
      * @memberof Engine
      */
     init(dirName?: string): void;
+    /**
+     *
+     * Create a new post inside posts folder.
+     *
+     * @param {string} postName
+     * @param {boolean} [outputInfo=true]
+     * @param {string} [templateName]
+     * @memberof Engine
+     */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    /**
+     *
+     * Find and read the .db.json file in root directory of blog
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     private readDb();
     /**
      *
@@ -34,5 +52,14 @@ export default class Engine {
      * @memberof Engine
      */
     private initFile(root);
+    /**
+     *
+     * Find .db.json file in current and parent directories.
+     *
+     * @private
+     * @param {string} curPath
+     * @returns {Promise<any>}
+     * @memberof Engine
+     */
     private findDb(curPath);
 }

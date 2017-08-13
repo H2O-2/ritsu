@@ -6,7 +6,6 @@ const fs = require("fs-extra");
 const yaml = require("js-yaml");
 const path = require("path");
 const process = require("process");
-const tildify = require("tildify");
 const constants_1 = require("./constants");
 const logging_1 = require("./logging");
 /**
@@ -58,10 +57,19 @@ class Engine {
             return;
         });
     }
+    /**
+     *
+     * Create a new post inside posts folder.
+     *
+     * @param {string} postName
+     * @param {boolean} [outputInfo=true]
+     * @param {string} [templateName]
+     * @memberof Engine
+     */
     newPost(postName, outputInfo = true, templateName) {
         this.readDb()
             .then(() => {
-            if (fs.pathExistsSync(path.join(this.postPath, `${postName}.md`))) {
+            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
                 throw new Error('Duplicate post name');
             }
         })
@@ -70,20 +78,44 @@ class Engine {
                 logging_1.default.logInfo('Creating New Post...');
         })
             .then(() => {
-            fs.copySync(path.join(this.templatePath, templateName ? `${templateName}.md` : `${constants_1.default.DEFAULT_TEMPLATE}.md`), path.join(this.postPath, `${postName}.md`));
+            const postPosn = path.join(this.draftPath, `${postName}.md`);
+            if (templateName) {
+                const templatePosn = path.join(this.templatePath, `${templateName}.md`);
+                if (fs.pathExistsSync(templatePosn)) {
+                    fs.copySync(templatePosn, postPosn);
+                }
+                else {
+                    throw new Error(`Template '${templateName}' does not exist`);
+                }
+            }
+            else {
+                const defaultTemplatePosn = path.join(this.templatePath, `${constants_1.default.DEFAULT_TEMPLATE}.md`);
+                if (!fs.pathExistsSync(defaultTemplatePosn)) {
+                    fs.copySync(path.join(this.initFilePath, 'templates', `${constants_1.default.DEFAULT_TEMPLATE}.md`), defaultTemplatePosn);
+                }
+                fs.copySync(defaultTemplatePosn, postPosn);
+            }
         })
             .then(() => {
             if (outputInfo) {
-                let newPostPath = tildify(path.relative(process.cwd(), this.postPath));
-                if (process.cwd() === this.postPath) {
-                    newPostPath = 'current directory';
+                let newDraftPath = path.relative(process.cwd(), this.draftPath);
+                if (process.cwd() === this.draftPath) {
+                    newDraftPath = 'current directory';
                 }
                 logging_1.default.logInfo(`New Post ${chalk.underline.black(postName)}` +
-                    ` created at ${chalk.underline.black(`${newPostPath}`)}`);
+                    ` created at ${chalk.underline.black(`${newDraftPath}`)}`);
             }
         })
             .catch((e) => logging_1.default.logErr(e.message));
     }
+    /**
+     *
+     * Find and read the .db.json file in root directory of blog
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     readDb() {
         return this.findDb(process.cwd())
             .then((path) => {
@@ -91,10 +123,6 @@ class Engine {
                 throw new Error('Please run this command in blog directory or initialize first');
             this.rootPath = path;
             this.initFile(this.rootPath);
-        })
-            .catch((e) => {
-            logging_1.default.logErr(e.message);
-            return;
         });
     }
     /**
@@ -106,11 +134,21 @@ class Engine {
      * @memberof Engine
      */
     initFile(root) {
+        this.draftPath = path.join(root, 'drafts');
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
     }
     // Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
+    /**
+     *
+     * Find .db.json file in current and parent directories.
+     *
+     * @private
+     * @param {string} curPath
+     * @returns {Promise<any>}
+     * @memberof Engine
+     */
     findDb(curPath) {
         const dbPath = path.join(curPath, constants_1.default.DB_FILE);
         return fs.pathExists(dbPath)

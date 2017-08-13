@@ -15,6 +15,14 @@ export default class Log {
      * @memberof Log
      */
     static logInfo(msg: string): void;
+    /**
+     *
+     * Log without chalk.js
+     *
+     * @static
+     * @param {string} msg
+     * @memberof Log
+     */
     static logPlain(msg: string): void;
     private static log;
 }

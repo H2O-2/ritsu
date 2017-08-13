@@ -23,6 +23,14 @@ export default class Log {
         Log.log(chalk.bgGreen.white(msg));
     }
 
+    /**
+     *
+     * Log without chalk.js
+     *
+     * @static
+     * @param {string} msg 
+     * @memberof Log
+     */
     public static logPlain(msg: string): void {
         Log.log(msg);
     }

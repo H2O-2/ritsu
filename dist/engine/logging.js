@@ -22,6 +22,14 @@ class Log {
     static logInfo(msg) {
         Log.log(chalk.bgGreen.white(msg));
     }
+    /**
+     *
+     * Log without chalk.js
+     *
+     * @static
+     * @param {string} msg
+     * @memberof Log
+     */
     static logPlain(msg) {
         Log.log(msg);
     }
