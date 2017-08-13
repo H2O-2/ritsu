@@ -1,5 +1,8 @@
 export default class Constants {
-    static DEFAULT_CONFIG_FILE: string;
-    static DEFAULT_THEME: string;
-    static GIT_REPO_THEME_NOTES: string;
+    static readonly POST_SUFFIX: string;
+    static readonly DB_FILE: string;
+    static readonly DEFAULT_CONFIG_FILE: string;
+    static readonly DEFAULT_THEME: string;
+    static readonly DEFAULT_TEMPLATE: string;
+    static readonly GIT_REPO_THEME_NOTES: string;
 }

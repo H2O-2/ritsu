@@ -15,5 +15,6 @@ export default class Log {
      * @memberof Log
      */
     static logInfo(msg: string): void;
+    static logPlain(msg: string): void;
     private static log;
 }

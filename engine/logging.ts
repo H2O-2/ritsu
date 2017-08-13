@@ -9,7 +9,7 @@ export default class Log {
      * @memberof Log
      */
     public static logErr(msg: string): void {
-        Log.log(chalk.bgRed('ERROR:'), msg);
+        Log.log(chalk.bgRed.black('ERROR:'), msg);
     }
 
     /**
@@ -20,7 +20,11 @@ export default class Log {
      * @memberof Log
      */
     public static logInfo(msg: string): void {
-        Log.log(chalk.bgGreen.black(msg));
+        Log.log(chalk.bgGreen.white(msg));
+    }
+
+    public static logPlain(msg: string): void {
+        Log.log(msg);
     }
 
     private static log = console.log;

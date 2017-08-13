@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const spawn = require("cross-spawn");
+const fs = require("fs-extra");
 const invalidDate = 'hello';
 const dateObj = new Date(invalidDate);
-console.log(isNaN(dateObj.getDate()));
+// console.log(isNaN(dateObj.getDate()));
 // var spawn = require('cross-spawn');
-const ls = spawn.sync('ls');
-console.log(ls);
+// const ls = spawn.sync('ls');
+// console.log(ls);
 // const ls = process.spawn('ls');
 // ls.stdout.on('data', (data) => console.log(data));
+fs.readFile('~/NaN').catch((e) => console.log(e.code));

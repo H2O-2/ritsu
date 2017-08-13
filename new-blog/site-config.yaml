@@ -1,0 +1,33 @@
+##############################################################
+##################         Site Info         #################
+##############################################################
+
+sitename: 'Kawaisou' # the name of your blog
+# siteTitle: 'Kawaisou' # the title of your blog, will show as the tile of your website, default to siteName
+siteDescription: 'Place for my thoughts' # description of the blog
+author: 'Kawai Ritsu' # the name of author
+siteIcon: './favicon.ico' # the path to site icon
+createTime: '2017' # creation time of the site
+avatar: './avatar.jpg' # avatar of user
+personalPage: 'https://github.com/H2O-2' # user jumps to this page after clicking on avatar
+
+
+
+##############################################################
+##################        Site Config        #################
+##############################################################
+
+theme: 'theme-notes' # theme to use for your site
+rootDir: '/' # this is the root directory of your blog. E.g. if the blog URL is blog.name.com, then the value should be '/'
+archiveDir: '/archive' # directory for archive page
+postDir: '/post' # directory for your posts
+
+
+
+##############################################################
+##################        Deployment         #################
+##############################################################
+
+repoURL: 'https://github.com/H2O-2/ritsu' # git repo you are shipping to
+branch: 'master' # git branch you want to use
+commitMsg: 'New post: ' # git commit message, defaut is 'New post: {{postName}}'

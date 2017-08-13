@@ -10,7 +10,7 @@ class Log {
      * @memberof Log
      */
     static logErr(msg) {
-        Log.log(chalk.bgRed('ERROR:'), msg);
+        Log.log(chalk.bgRed.black('ERROR:'), msg);
     }
     /**
      * Logs general informations.
@@ -20,7 +20,10 @@ class Log {
      * @memberof Log
      */
     static logInfo(msg) {
-        Log.log(chalk.bgGreen.black(msg));
+        Log.log(chalk.bgGreen.white(msg));
+    }
+    static logPlain(msg) {
+        Log.log(msg);
     }
 }
 Log.log = console.log;
