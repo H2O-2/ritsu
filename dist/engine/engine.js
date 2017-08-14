@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const chalk = require("chalk");
+const commandExist = require("command-exists");
 const spawn = require("cross-spawn");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
@@ -44,7 +45,17 @@ class Engine {
         })
             .then(() => logging_1.default.logInfo('Initializing...'))
             .then(() => fs.copySync(this.initFilePath, this.rootPath))
-            .then(() => spawn.sync('git', ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: 'inherit' }))
+            .then(() => logging_1.default.logInfo('Fetching theme...'))
+            .then(() => {
+            if (commandExist.sync('gita')) {
+                spawn.sync('git', ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: ['ignore', 'ignore', 'pipe'] });
+            }
+            else {
+                throw new Error(`Git is not installed on your machine!\n\n` +
+                    `Check ${chalk.underline('https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}` +
+                    ` for the installation of git\n`);
+            }
+        })
             .then(() => fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
             .then(() => {
             // change working directory
@@ -54,6 +65,7 @@ class Engine {
             .then(() => logging_1.default.logInfo('Blog successfully initialized! You can start writing :)'))
             .catch((e) => {
             logging_1.default.logErr(e.message);
+            this.abortInit(dirName);
             return;
         });
     }
@@ -162,6 +174,16 @@ class Engine {
                 if (parent === curPath)
                     return '';
                 return this.findDb(parent);
+            }
+        })
+            .catch((e) => logging_1.default.logErr(e.message));
+    }
+    abortInit(dirName) {
+        fs.pathExists(this.rootPath)
+            .then((exists) => {
+            if (exists) {
+                logging_1.default.logPlain(chalk.bgRed.black('Reverting changes...'));
+                spawn.sync('rm', ['-rf', dirName], { stdio: 'inherit' });
             }
         })
             .catch((e) => logging_1.default.logErr(e.message));

@@ -31,6 +31,7 @@
     "@types/js-yaml": "^3.9.0",
     "@types/node-sass": "^3.10.32",
     "chalk": "^2.1.0",
+    "command-exists": "^1.2.2",
     "commander": "^2.11.0",
     "cross-spawn": "^5.1.0",
     "ejs": "^2.5.7",

@@ -1,4 +1,5 @@
 import * as chalk from 'chalk';
+import * as commandExist from 'command-exists';
 import * as spawn from 'cross-spawn';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
@@ -88,8 +89,17 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Initializing...'))
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
-        .then(() => spawn.sync('git', ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
-                            { stdio: 'inherit' }))
+        .then(() => Log.logInfo('Fetching theme...'))
+        .then(() => {
+            if (commandExist.sync('git')) {
+                spawn.sync('git', ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
+                            { stdio: ['ignore', 'ignore', 'pipe'] });
+            } else {
+                throw new Error(`Git is not installed on your machine!\n\n` +
+                `Check ${chalk.underline('https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}` +
+                ` for the installation of git\n`);
+            }
+        })
         .then(() => fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), dbData))
         .then(() => {
             // change working directory
@@ -99,6 +109,7 @@ export default class Engine {
         .then(() => Log.logInfo('Blog successfully initialized! You can start writing :)'))
         .catch((e: Error) => {
             Log.logErr(e.message);
+            this.abortInit(dirName);
             return;
         });
     }
@@ -217,6 +228,17 @@ export default class Engine {
                 if (parent === curPath) return '';
 
                 return this.findDb(parent);
+            }
+        })
+        .catch((e: Error) => Log.logErr(e.message));
+    }
+
+    private abortInit(dirName: string): void {
+        fs.pathExists(this.rootPath)
+        .then((exists: boolean) => {
+            if (exists) {
+                Log.logPlain(chalk.bgRed.black('Reverting changes...'));
+                spawn.sync('rm', ['-rf', dirName], { stdio: 'inherit' });
             }
         })
         .catch((e: Error) => Log.logErr(e.message));

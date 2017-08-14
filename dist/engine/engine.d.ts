@@ -62,4 +62,5 @@ export default class Engine {
      * @memberof Engine
      */
     private findDb(curPath);
+    private abortInit(dirName);
 }
