@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "ejs": "ejs",
     "run": "tsc; node dist/index",
     "engine": "tsc; node dist/engine/engine",
     "test": "tsc; node dist/engine/test"

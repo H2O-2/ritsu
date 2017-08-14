@@ -47,7 +47,7 @@ class Engine {
             .then(() => fs.copySync(this.initFilePath, this.rootPath))
             .then(() => logging_1.default.logInfo('Fetching theme...'))
             .then(() => {
-            if (commandExist.sync('gita')) {
+            if (commandExist.sync('git')) {
                 spawn.sync('git', ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: ['ignore', 'ignore', 'pipe'] });
             }
             else {
