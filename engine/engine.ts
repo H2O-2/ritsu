@@ -180,10 +180,11 @@ export default class Engine {
      */
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
-            .then((path: string) => {
-                if (path.length <= 0) throw new Error('Please run this command in blog directory or initialize first');
+            .then((dbPath: string) => {
+                if (dbPath.length <= 0)
+                    throw new Error('Please run this command in blog directory or initialize first');
 
-                this.rootPath = path;
+                this.rootPath = dbPath;
                 this.initFile(this.rootPath);
             });
     }
