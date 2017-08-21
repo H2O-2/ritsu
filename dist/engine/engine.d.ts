@@ -17,6 +17,7 @@ export default class Engine {
     private themePath;
     private defaultConfig;
     constructor();
+    readConfig(): Promise<string>;
     /**
      * Initialize an empty directory to a blog container.
      *
@@ -34,6 +35,7 @@ export default class Engine {
      * @memberof Engine
      */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    generate(dirName?: string): void;
     /**
      *
      * Find and read the .db.json file in root directory of blog
@@ -45,14 +47,16 @@ export default class Engine {
     private readDb();
     /**
      *
-     * Initialize paths of directories according to root directory.
+     * Initialize fields of the engine.
      *
      * @private
      * @param {string} root
      * @memberof Engine
      */
-    private initFile(root);
+    private initEngine(root);
     /**
+     *
+     * Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
      *
      * Find .db.json file in current and parent directories.
      *
@@ -62,5 +66,13 @@ export default class Engine {
      * @memberof Engine
      */
     private findDb(curPath);
+    /**
+     *
+     * Delete files created during initialization
+     *
+     * @private
+     * @param {string} dirName
+     * @memberof Engine
+     */
     private abortInit(dirName);
 }

@@ -4,5 +4,7 @@ export default class Constants {
     static readonly DEFAULT_CONFIG_FILE: string;
     static readonly DEFAULT_THEME: string;
     static readonly DEFAULT_TEMPLATE: string;
+    static readonly DEFAULT_DIR_NAME: string;
+    static readonly DEFAULT_GENERATE_DIR: string;
     static readonly GIT_REPO_THEME_NOTES: string;
 }

@@ -36,6 +36,7 @@ interface SiteConfig {
 
 interface SiteDb {
     rootPath: string;
+    defaultConfig: SiteConfig;
 }
 
 /**
@@ -61,10 +62,11 @@ export default class Engine {
         this.engineRootPath = path.join(__dirname, '..' + path.sep + '..');
         this.defaultConfigPath = path.join(this.engineRootPath, Constants.DEFAULT_CONFIG_FILE);
         this.initFilePath = path.join(this.engineRootPath, `init${path.sep}`);
+    }
 
-        fs.readFile(this.defaultConfigPath, 'utf8')
-        .then((fileContent: string) => this.defaultConfig = yaml.safeLoad(fileContent))
-        .catch((e: Error) => Log.logErr(e.message));
+    public readConfig(): Promise<string> {
+        return fs.readFile(this.defaultConfigPath, 'utf8')
+        .then((fileContent: string) => this.defaultConfig = yaml.safeLoad(fileContent));
     }
 
     /**
@@ -73,10 +75,10 @@ export default class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    public init(dirName: string = 'new-blog'): void {
+    public init(dirName: string = Constants.DEFAULT_DIR_NAME): void {
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
-        this.initFile(this.rootPath);
+        this.initEngine(this.rootPath);
 
         const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME);
         const dbData = {
@@ -170,6 +172,27 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    public generate(dirName: string = Constants.DEFAULT_GENERATE_DIR) {
+        let generatePath: string;
+
+        this.readDb()
+        .then(() => generatePath = path.join(this.rootPath, dirName))
+        .then(() => fs.pathExists(generatePath))
+        .then((exists: boolean) => {
+            if (exists) throw new Error(`Directory ${chalk.underline(dirName)} already exists.` +
+                `Run \`${chalk.cyan('ritsu regenerate', dirName)}\` to regenerate site or ` +
+                `specify another directory name.`);
+        })
+        .then(() => Log.logInfo('Generating...'))
+        .then(() => fs.mkdir(generatePath))
+        .then(() => process.chdir(generatePath))
+        .then(() => {
+            fs.mkdirSync(this.defaultConfig.archiveDir);
+            fs.mkdirSync(this.defaultConfig.postDir);
+        })
+        .catch((e: Error) => Log.logErr(e.message));
+    }
+
     /**
      *
      * Find and read the .db.json file in root directory of blog
@@ -180,32 +203,35 @@ export default class Engine {
      */
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
-            .then((dbPath: string) => {
-                if (dbPath.length <= 0)
+            .then((data: SiteDb) => {
+                if (data.rootPath.length <= 0)
                     throw new Error('Please run this command in blog directory or initialize first');
 
-                this.rootPath = dbPath;
-                this.initFile(this.rootPath);
+                this.rootPath = data.rootPath;
+                // this.defaultConfig = data.defaultConfig;
+                this.initEngine(this.rootPath);
             });
     }
 
     /**
      *
-     * Initialize paths of directories according to root directory.
+     * Initialize fields of the engine.
      *
      * @private
      * @param {string} root
      * @memberof Engine
      */
-    private initFile(root: string): void {
+    private initEngine(root: string): void {
         this.draftPath = path.join(root, 'drafts');
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
+        this.defaultConfigPath = path.join(root, 'site-config.yaml');
     }
 
-    // Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
     /**
+     *
+     * Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
      *
      * Find .db.json file in current and parent directories.
      *
@@ -222,7 +248,7 @@ export default class Engine {
             if (exists) {
                 const data: SiteDb = fs.readJSONSync(dbPath);
 
-                return data.rootPath;
+                return data;
             } else {
                 const parent = path.dirname(curPath);
 
@@ -234,6 +260,14 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    /**
+     *
+     * Delete files created during initialization
+     *
+     * @private
+     * @param {string} dirName
+     * @memberof Engine
+     */
     private abortInit(dirName: string): void {
         fs.pathExists(this.rootPath)
         .then((exists: boolean) => {

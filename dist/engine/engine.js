@@ -20,9 +20,10 @@ class Engine {
         this.engineRootPath = path.join(__dirname, '..' + path.sep + '..');
         this.defaultConfigPath = path.join(this.engineRootPath, constants_1.default.DEFAULT_CONFIG_FILE);
         this.initFilePath = path.join(this.engineRootPath, `init${path.sep}`);
-        fs.readFile(this.defaultConfigPath, 'utf8')
-            .then((fileContent) => this.defaultConfig = yaml.safeLoad(fileContent))
-            .catch((e) => logging_1.default.logErr(e.message));
+    }
+    readConfig() {
+        return fs.readFile(this.defaultConfigPath, 'utf8')
+            .then((fileContent) => this.defaultConfig = yaml.safeLoad(fileContent));
     }
     /**
      * Initialize an empty directory to a blog container.
@@ -30,10 +31,10 @@ class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    init(dirName = 'new-blog') {
+    init(dirName = constants_1.default.DEFAULT_DIR_NAME) {
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
-        this.initFile(this.rootPath);
+        this.initEngine(this.rootPath);
         const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME);
         const dbData = {
             rootPath: this.rootPath,
@@ -120,6 +121,26 @@ class Engine {
         })
             .catch((e) => logging_1.default.logErr(e.message));
     }
+    generate(dirName = constants_1.default.DEFAULT_GENERATE_DIR) {
+        let generatePath;
+        this.readDb()
+            .then(() => generatePath = path.join(this.rootPath, dirName))
+            .then(() => fs.pathExists(generatePath))
+            .then((exists) => {
+            if (exists)
+                throw new Error(`Directory ${chalk.underline(dirName)} already exists.` +
+                    `Run \`${chalk.cyan('ritsu regenerate', dirName)}\` to regenerate site or ` +
+                    `specify another directory name.`);
+        })
+            .then(() => logging_1.default.logInfo('Generating...'))
+            .then(() => fs.mkdir(generatePath))
+            .then(() => process.chdir(generatePath))
+            .then(() => {
+            fs.mkdirSync(this.defaultConfig.archiveDir);
+            fs.mkdirSync(this.defaultConfig.postDir);
+        })
+            .catch((e) => logging_1.default.logErr(e.message));
+    }
     /**
      *
      * Find and read the .db.json file in root directory of blog
@@ -130,29 +151,32 @@ class Engine {
      */
     readDb() {
         return this.findDb(process.cwd())
-            .then((path) => {
-            if (path.length <= 0)
+            .then((data) => {
+            if (data.rootPath.length <= 0)
                 throw new Error('Please run this command in blog directory or initialize first');
-            this.rootPath = path;
-            this.initFile(this.rootPath);
+            this.rootPath = data.rootPath;
+            // this.defaultConfig = data.defaultConfig;
+            this.initEngine(this.rootPath);
         });
     }
     /**
      *
-     * Initialize paths of directories according to root directory.
+     * Initialize fields of the engine.
      *
      * @private
      * @param {string} root
      * @memberof Engine
      */
-    initFile(root) {
+    initEngine(root) {
         this.draftPath = path.join(root, 'drafts');
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
+        this.defaultConfigPath = path.join(root, 'site-config.yaml');
     }
-    // Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
     /**
+     *
+     * Inspired by hexo-cli: https://github.com/hexojs/hexo-cli
      *
      * Find .db.json file in current and parent directories.
      *
@@ -167,7 +191,7 @@ class Engine {
             .then((exists) => {
             if (exists) {
                 const data = fs.readJSONSync(dbPath);
-                return data.rootPath;
+                return data;
             }
             else {
                 const parent = path.dirname(curPath);
@@ -178,6 +202,14 @@ class Engine {
         })
             .catch((e) => logging_1.default.logErr(e.message));
     }
+    /**
+     *
+     * Delete files created during initialization
+     *
+     * @private
+     * @param {string} dirName
+     * @memberof Engine
+     */
     abortInit(dirName) {
         fs.pathExists(this.rootPath)
             .then((exists) => {
