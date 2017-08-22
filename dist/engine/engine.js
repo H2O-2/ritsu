@@ -36,9 +36,7 @@ class Engine {
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
         const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME);
-        const dbData = {
-            rootPath: this.rootPath,
-        };
+        let dbData;
         fs.pathExists(this.rootPath)
             .then((exists) => {
             if (exists)
@@ -46,6 +44,8 @@ class Engine {
         })
             .then(() => logging_1.default.logInfo('Initializing...'))
             .then(() => fs.copySync(this.initFilePath, this.rootPath))
+            .then(() => this.defaultConfig = yaml.safeLoad(fs.readFileSync(this.defaultConfigPath, 'utf8')))
+            .then(() => { dbData = { rootPath: this.rootPath, defaultConfig: this.defaultConfig }; })
             .then(() => logging_1.default.logInfo('Fetching theme...'))
             .then(() => {
             if (commandExist.sync('git')) {
@@ -136,6 +136,7 @@ class Engine {
             .then(() => fs.mkdir(generatePath))
             .then(() => process.chdir(generatePath))
             .then(() => {
+            console.log(process.cwd());
             fs.mkdirSync(this.defaultConfig.archiveDir);
             fs.mkdirSync(this.defaultConfig.postDir);
         })
@@ -152,10 +153,10 @@ class Engine {
     readDb() {
         return this.findDb(process.cwd())
             .then((data) => {
-            if (data.rootPath.length <= 0)
+            if (!data.rootPath)
                 throw new Error('Please run this command in blog directory or initialize first');
             this.rootPath = data.rootPath;
-            // this.defaultConfig = data.defaultConfig;
+            this.defaultConfig = data.defaultConfig;
             this.initEngine(this.rootPath);
         });
     }
@@ -196,7 +197,7 @@ class Engine {
             else {
                 const parent = path.dirname(curPath);
                 if (parent === curPath)
-                    return '';
+                    return {};
                 return this.findDb(parent);
             }
         })

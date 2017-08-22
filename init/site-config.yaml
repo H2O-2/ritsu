@@ -2,14 +2,20 @@
 ##################         Site Info         #################
 ##############################################################
 
-sitename: 'Kawaisou' # the name of your blog
-# siteTitle: 'Kawaisou' # the title of your blog, will show as the tile of your website, default to siteName
+siteName: 'Kawaisou' # the name of your blog
+# siteSubTitle: '河合庄' # subtitle of your blog, will show in the format of 'siteName - siteSubTitle', default to none
 siteDescription: 'Place for my thoughts' # description of the blog
 author: 'Kawai Ritsu' # the name of author
-siteIcon: './favicon.ico' # the path to site icon
+siteIcon: 'favicon.ico' # the path to site icon
 createTime: '2017' # creation time of the site
-avatar: './avatar.jpg' # avatar of user
-personalPage: 'https://github.com/H2O-2' # user jumps to this page after clicking on avatar
+avatar: 'avatar.jpg' # avatar of user
+personalPage: 'https://github.com/H2O-2' # personal page of user
+
+#Open Graph Data
+og: !!map
+  image: 'favicon.ico'
+  title: 'Kawaisou'
+  description: 'Place for my thoughts'
 
 
 
@@ -18,9 +24,11 @@ personalPage: 'https://github.com/H2O-2' # user jumps to this page after clickin
 ##############################################################
 
 theme: 'theme-notes' # theme to use for your site
+rootURL: 'http://blog.h2o2.com/' # the root URL of your blog, i.e. URL without subdirectories
 rootDir: '/' # this is the root directory of your blog. E.g. if the blog URL is blog.name.com, then the value should be '/'
-archiveDir: '/archive' # directory for archive page
-postDir: '/post' # directory for your posts
+archiveDir: 'archive/' # directory for archive page
+postDir: 'post/' # directory for your posts
+preprocess: true # Using css preprocessors (sass/scss) or not, default to true
 
 
 

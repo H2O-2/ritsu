@@ -81,9 +81,7 @@ export default class Engine {
         this.initEngine(this.rootPath);
 
         const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME);
-        const dbData = {
-            rootPath: this.rootPath,
-        };
+        let dbData: SiteDb;
 
         fs.pathExists(this.rootPath)
         .then((exists: boolean) => {
@@ -91,6 +89,8 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Initializing...'))
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
+        .then(() => this.defaultConfig = yaml.safeLoad(fs.readFileSync(this.defaultConfigPath, 'utf8')))
+        .then(() => { dbData = { rootPath: this.rootPath, defaultConfig: this.defaultConfig }; })
         .then(() => Log.logInfo('Fetching theme...'))
         .then(() => {
             if (commandExist.sync('git')) {
@@ -204,11 +204,11 @@ export default class Engine {
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
             .then((data: SiteDb) => {
-                if (data.rootPath.length <= 0)
+                if (!data.rootPath)
                     throw new Error('Please run this command in blog directory or initialize first');
 
                 this.rootPath = data.rootPath;
-                // this.defaultConfig = data.defaultConfig;
+                this.defaultConfig = data.defaultConfig;
                 this.initEngine(this.rootPath);
             });
     }
@@ -252,7 +252,7 @@ export default class Engine {
             } else {
                 const parent = path.dirname(curPath);
 
-                if (parent === curPath) return '';
+                if (parent === curPath) return {};
 
                 return this.findDb(parent);
             }
