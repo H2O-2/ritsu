@@ -7,8 +7,9 @@ import * as path from 'path';
 import * as process from 'process';
 
 import Constants from './constants';
+import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
-import Log from './logging';
+import Log from './log';
 
 /**
  * Stores the options of site configurations. For details of the options see ./site-config.yaml.
@@ -64,11 +65,6 @@ export default class Engine {
         this.initFilePath = path.join(this.engineRootPath, `init${path.sep}`);
     }
 
-    public readConfig(): Promise<string> {
-        return fs.readFile(this.defaultConfigPath, 'utf8')
-        .then((fileContent: string) => this.defaultConfig = yaml.safeLoad(fileContent));
-    }
-
     /**
      * Initialize an empty directory to a blog container.
      *
@@ -85,7 +81,7 @@ export default class Engine {
 
         fs.pathExists(this.rootPath)
         .then((exists: boolean) => {
-            if (exists) throw new Error('A blog with the same name already exists here');
+            if (exists) throw new DuplicateError('A blog with the same name already exists here', dirName);
         })
         .then(() => Log.logInfo('Initializing...'))
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
@@ -111,7 +107,7 @@ export default class Engine {
         .then(() => Log.logInfo('Blog successfully initialized! You can start writing :)'))
         .catch((e: Error) => {
             Log.logErr(e.message);
-            this.abortInit(dirName);
+            this.abortGen(e);
             return;
         });
     }
@@ -172,16 +168,27 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    /**
+     *
+     * Generate publish directory containing the full blog site in the root of blog directory.
+     *
+     * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
+     * @memberof Engine
+     */
     public generate(dirName: string = Constants.DEFAULT_GENERATE_DIR) {
         let generatePath: string;
+        let generatePathRel: string;
 
         this.readDb()
         .then(() => generatePath = path.join(this.rootPath, dirName))
         .then(() => fs.pathExists(generatePath))
         .then((exists: boolean) => {
-            if (exists) throw new Error(`Directory ${chalk.underline(dirName)} already exists.` +
-                `Run \`${chalk.cyan('ritsu regenerate', dirName)}\` to regenerate site or ` +
-                `specify another directory name.`);
+            generatePathRel = path.relative(process.cwd(), generatePath);
+
+            if (exists)
+                throw new DuplicateError(`Directory ${chalk.underline.cyan(generatePathRel)} already exists.` +
+                ` Run \`${chalk.cyan('ritsu regenerate', dirName)}\` to regenerate blog or specify` +
+                ` another directory name.`, dirName);
         })
         .then(() => Log.logInfo('Generating...'))
         .then(() => fs.mkdir(generatePath))
@@ -190,7 +197,12 @@ export default class Engine {
             fs.mkdirSync(this.defaultConfig.archiveDir);
             fs.mkdirSync(this.defaultConfig.postDir);
         })
-        .catch((e: Error) => Log.logErr(e.message));
+        .then(() => Log.logInfo(`Blog successfully generated at ${chalk.underline.cyan(generatePathRel)}!` +
+                ` Run \`${chalk.cyan('ritsu deploy')}\` to deploy blog.`))
+        .catch((e: Error) => {
+            Log.logErr(e.message);
+            this.abortGen(e);
+        });
     }
 
     /**
@@ -262,18 +274,19 @@ export default class Engine {
 
     /**
      *
-     * Delete files created during initialization
+     * Delete files created during a failed operation.
      *
      * @private
-     * @param {string} dirName
+     * @param {Error} engineError
      * @memberof Engine
      */
-    private abortInit(dirName: string): void {
+    private abortGen(engineError: Error): void {
         fs.pathExists(this.rootPath)
         .then((exists: boolean) => {
             if (exists) {
                 Log.logPlain(chalk.bgRed.black('Reverting changes...'));
-                spawn.sync('rm', ['-rf', dirName], { stdio: 'inherit' });
+                if (!(engineError instanceof DuplicateError))
+                    spawn.sync('rm', ['-rf', engineError], { stdio: 'inherit' });
             }
         })
         .catch((e: Error) => Log.logErr(e.message));

@@ -17,7 +17,6 @@ export default class Engine {
     private themePath;
     private defaultConfig;
     constructor();
-    readConfig(): Promise<string>;
     /**
      * Initialize an empty directory to a blog container.
      *
@@ -35,6 +34,13 @@ export default class Engine {
      * @memberof Engine
      */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    /**
+     *
+     * Generate publish directory containing the full blog site in the root of blog directory.
+     *
+     * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
+     * @memberof Engine
+     */
     generate(dirName?: string): void;
     /**
      *
@@ -68,11 +74,11 @@ export default class Engine {
     private findDb(curPath);
     /**
      *
-     * Delete files created during initialization
+     * Delete files created during a failed operation.
      *
      * @private
-     * @param {string} dirName
+     * @param {Error} engineError
      * @memberof Engine
      */
-    private abortInit(dirName);
+    private abortGen(engineError);
 }
