@@ -3,18 +3,31 @@
 import * as ejs from 'ejs';
 import * as path from 'path';
 
-class EjsParser {
-    private fileRoot: string;
-    private outputPath: string;
+import Log from './log';
+import SiteConfig from './SiteConfig';
+import ThemeConfig from './ThemeConfig';
 
-    constructor(fileRoot: string, outputPath: string) {
-        this.fileRoot = fileRoot;
+class EjsParser {
+    private ejsRoot: string;
+    private siteConfig: SiteConfig;
+    private themeConfig: ThemeConfig;
+
+    constructor(ejsRoot: string, siteConfig: SiteConfig, themeConfig: ThemeConfig) {
+        this.ejsRoot = ejsRoot;
+        this.siteConfig = siteConfig;
+        this.themeConfig = themeConfig;
     }
 
-    private renderFile(filePath: string): void {
-        ejs.renderFile(path.join(this.fileRoot, filePath), (err: Error, data: string) => {
-            if (err) throw err.message;
-        });
+    public render(): string|void {
+        try {
+            ejs.renderFile(path.join(this.ejsRoot, path.sep, 'layout.ejs'),
+                            { site: this.siteConfig, theme: this.themeConfig },
+                            (renderError: Error, data: string) => {
+                                return data;
+            });
+        } catch (renderError) {
+            Log.logErr(renderError.message);
+        }
     }
 }
 

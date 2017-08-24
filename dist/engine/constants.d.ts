@@ -7,4 +7,6 @@ export default class Constants {
     static readonly DEFAULT_DIR_NAME: string;
     static readonly DEFAULT_GENERATE_DIR: string;
     static readonly GIT_REPO_THEME_NOTES: string;
+    static readonly EJS_DIR: string;
+    static readonly EJS_PART_DIR: string;
 }

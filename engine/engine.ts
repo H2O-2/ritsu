@@ -10,30 +10,7 @@ import Constants from './constants';
 import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
 import Log from './log';
-
-/**
- * Stores the options of site configurations. For details of the options see ./site-config.yaml.
- *
- * @interface SiteConfig
- */
-interface SiteConfig {
-    // See site-config.yaml for details
-    siteName: string;
-    siteDescription?: string;
-    author: string;
-    siteIcon?: string;
-    createTime: string;
-    avatar?: string;
-    personalPage?: string;
-    theme: string;
-    rootDir: string;
-    archiveDir: string;
-    postDir: string;
-    templateDir: string;
-    repoURL?: string;
-    branch?: string;
-    commitMsg?: string;
-}
+import SiteConfig from './SiteConfig';
 
 interface SiteDb {
     rootPath: string;
@@ -76,7 +53,7 @@ export default class Engine {
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
 
-        const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME);
+        const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME, path.sep);
         let dbData: SiteDb;
 
         fs.pathExists(this.rootPath)
@@ -292,9 +269,3 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 }
-
-// const newEngine = new Engine();
-// setTimeout(() => {
-//     // newEngine.newPost('test');
-//     newEngine.init();
-// }, 100);

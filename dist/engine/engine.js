@@ -32,7 +32,7 @@ class Engine {
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
-        const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME);
+        const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME, path.sep);
         let dbData;
         fs.pathExists(this.rootPath)
             .then((exists) => {
@@ -234,8 +234,3 @@ class Engine {
     }
 }
 exports.default = Engine;
-// const newEngine = new Engine();
-// setTimeout(() => {
-//     // newEngine.newPost('test');
-//     newEngine.init();
-// }, 100);
