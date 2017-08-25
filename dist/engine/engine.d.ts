@@ -1,4 +1,3 @@
-import EjsParser from './ejsParser';
 /**
  * The Ritsu Engine, responsible for all operations of the static site generate.
  *
@@ -6,16 +5,20 @@ import EjsParser from './ejsParser';
  * @class Engine
  */
 export default class Engine {
-    ejsParser: EjsParser;
     private engineRootPath;
-    private defaultConfigPath;
+    private defaultSiteConfigPath;
+    private defaultThemeConfigPath;
     private initFilePath;
     private rootPath;
     private draftPath;
     private postPath;
     private templatePath;
     private themePath;
-    private defaultConfig;
+    private curTheme;
+    private defaultSiteConfig;
+    private customSiteConfig;
+    private defaultThemeConfig;
+    private customThemeConfig;
     constructor();
     /**
      * Initialize an empty directory to a blog container.
@@ -42,6 +45,7 @@ export default class Engine {
      * @memberof Engine
      */
     generate(dirName?: string): void;
+    private updateConfig();
     /**
      *
      * Find and read the .db.json file in root directory of blog
@@ -80,5 +84,5 @@ export default class Engine {
      * @param {Error} engineError
      * @memberof Engine
      */
-    private abortGen(engineError);
+    private abortGen(engineError, dirName);
 }

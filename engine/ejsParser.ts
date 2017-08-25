@@ -1,14 +1,15 @@
 // Parse ejs to html string
 
 import * as ejs from 'ejs';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 
-import Log from './log';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
 class EjsParser {
-    private ejsRoot: string;
+    public readonly ejsRoot: string;
+
     private siteConfig: SiteConfig;
     private themeConfig: ThemeConfig;
 
@@ -18,16 +19,15 @@ class EjsParser {
         this.themeConfig = themeConfig;
     }
 
-    public render(): string|void {
-        try {
-            ejs.renderFile(path.join(this.ejsRoot, path.sep, 'layout.ejs'),
-                            { site: this.siteConfig, theme: this.themeConfig },
-                            (renderError: Error, data: string) => {
-                                return data;
-            });
-        } catch (renderError) {
-            Log.logErr(renderError.message);
-        }
+    public render(): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig }, 
+                            { rmWhitespace: true }, (renderError: Error, data: string) => {
+                                if (renderError) reject(new Error(renderError.message));
+
+                                resolve(data);
+                            });
+        });
     }
 }
 

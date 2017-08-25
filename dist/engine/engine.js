@@ -9,6 +9,7 @@ const path = require("path");
 const process = require("process");
 const constants_1 = require("./constants");
 const duplicateError_1 = require("./duplicateError");
+const ejsParser_1 = require("./ejsParser");
 const log_1 = require("./log");
 /**
  * The Ritsu Engine, responsible for all operations of the static site generate.
@@ -18,9 +19,11 @@ const log_1 = require("./log");
  */
 class Engine {
     constructor() {
+        this.curTheme = constants_1.default.DEFAULT_THEME;
         this.engineRootPath = path.join(__dirname, '..' + path.sep + '..');
-        this.defaultConfigPath = path.join(this.engineRootPath, constants_1.default.DEFAULT_CONFIG_FILE);
         this.initFilePath = path.join(this.engineRootPath, `init${path.sep}`);
+        this.defaultSiteConfigPath = path.join(this.engineRootPath, constants_1.default.DEFAULT_SITE_CONFIG);
+        this.defaultThemeConfigPath = path.join(this.engineRootPath, 'themes', constants_1.default.DEFAULT_THEME, constants_1.default.DEFAULT_THEME_CONFIG);
     }
     /**
      * Initialize an empty directory to a blog container.
@@ -41,8 +44,20 @@ class Engine {
         })
             .then(() => log_1.default.logInfo('Initializing...'))
             .then(() => fs.copySync(this.initFilePath, this.rootPath))
-            .then(() => this.defaultConfig = yaml.safeLoad(fs.readFileSync(this.defaultConfigPath, 'utf8')))
-            .then(() => { dbData = { rootPath: this.rootPath, defaultConfig: this.defaultConfig }; })
+            .then(() => fs.copySync(this.defaultThemeConfigPath, path.join(this.rootPath, constants_1.default.DEFAULT_THEME_CONFIG)))
+            .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')))
+            .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')))
+            .then(() => dbData = {
+            rootPath: this.rootPath,
+            defaultSiteConfig: this.defaultSiteConfig,
+            defaultThemeConfig: this.defaultThemeConfig,
+        })
+            .then(() => fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
+            .then(() => {
+            // change working directory
+            process.chdir(this.rootPath);
+        })
+            .then(() => this.newPost('ritsu', false))
             .then(() => log_1.default.logInfo('Fetching theme...'))
             .then(() => {
             if (commandExist.sync('git')) {
@@ -54,16 +69,10 @@ class Engine {
                     ` for the installation of git\n`);
             }
         })
-            .then(() => fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
-            .then(() => {
-            // change working directory
-            process.chdir(this.rootPath);
-        })
-            .then(() => this.newPost('ritsu', false))
             .then(() => log_1.default.logInfo('Blog successfully initialized! You can start writing :)'))
             .catch((e) => {
             log_1.default.logErr(e.message);
-            this.abortGen(e);
+            this.abortGen(e, dirName);
             return;
         });
     }
@@ -78,6 +87,7 @@ class Engine {
      */
     newPost(postName, outputInfo = true, templateName) {
         this.readDb()
+            .then(() => this.updateConfig())
             .then(() => {
             if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
                 throw new Error('Duplicate post name');
@@ -126,9 +136,11 @@ class Engine {
      * @memberof Engine
      */
     generate(dirName = constants_1.default.DEFAULT_GENERATE_DIR) {
+        let ejsParser;
         let generatePath;
         let generatePathRel;
         this.readDb()
+            .then(() => this.updateConfig())
             .then(() => generatePath = path.join(this.rootPath, dirName))
             .then(() => fs.pathExists(generatePath))
             .then((exists) => {
@@ -139,18 +151,28 @@ class Engine {
                     ` another directory name.`, dirName);
         })
             .then(() => log_1.default.logInfo('Generating...'))
+            .then(() => ejsParser = new ejsParser_1.default(path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR), this.customSiteConfig, this.customThemeConfig))
             .then(() => fs.mkdir(generatePath))
             .then(() => process.chdir(generatePath))
             .then(() => {
-            fs.mkdirSync(this.defaultConfig.archiveDir);
-            fs.mkdirSync(this.defaultConfig.postDir);
+            fs.mkdirSync(this.defaultSiteConfig.archiveDir);
+            fs.mkdirSync(this.defaultSiteConfig.postDir);
         })
-            .then(() => log_1.default.logInfo(`Blog successfully generated at ${chalk.underline.cyan(generatePathRel)}!` +
-            ` Run \`${chalk.cyan('ritsu deploy')}\` to deploy blog.`))
+            .then(() => process.chdir(ejsParser.ejsRoot))
+            .then(() => ejsParser.render())
+            .then((ejsOutput) => fs.outputFile(path.join(generatePath, constants_1.default.DEFAULT_HTML_NAME), ejsOutput))
+            .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
+            ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {
             log_1.default.logErr(e.message);
-            this.abortGen(e);
+            this.abortGen(e, generatePath);
         });
+    }
+    updateConfig() {
+        return fs.readFile(constants_1.default.DEFAULT_SITE_CONFIG, 'utf8')
+            .then((siteConfigStr) => this.customSiteConfig = yaml.safeLoad(siteConfigStr))
+            .then(() => fs.readFile(constants_1.default.DEFAULT_THEME_CONFIG, 'utf8'))
+            .then((themeConfigStr) => this.customThemeConfig = yaml.safeLoad(themeConfigStr));
     }
     /**
      *
@@ -164,9 +186,11 @@ class Engine {
         return this.findDb(process.cwd())
             .then((data) => {
             if (!data.rootPath)
-                throw new Error('Please run this command in blog directory or initialize first');
+                throw new Error(`Please execute this command in blog directory or run` +
+                    ` \`${chalk.cyan('ritsu init')}\` first`);
             this.rootPath = data.rootPath;
-            this.defaultConfig = data.defaultConfig;
+            this.defaultSiteConfig = data.defaultSiteConfig;
+            this.defaultThemeConfig = data.defaultThemeConfig;
             this.initEngine(this.rootPath);
         });
     }
@@ -183,7 +207,6 @@ class Engine {
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
-        this.defaultConfigPath = path.join(root, 'site-config.yaml');
     }
     /**
      *
@@ -221,13 +244,13 @@ class Engine {
      * @param {Error} engineError
      * @memberof Engine
      */
-    abortGen(engineError) {
+    abortGen(engineError, dirName) {
         fs.pathExists(this.rootPath)
             .then((exists) => {
             if (exists) {
                 log_1.default.logPlain(chalk.bgRed.black('Reverting changes...'));
                 if (!(engineError instanceof duplicateError_1.default))
-                    spawn.sync('rm', ['-rf', engineError], { stdio: 'inherit' });
+                    spawn.sync('rm', ['-rf', dirName], { stdio: 'inherit' });
             }
         })
             .catch((e) => log_1.default.logErr(e.message));

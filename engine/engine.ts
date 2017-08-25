@@ -11,10 +11,12 @@ import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
 import Log from './log';
 import SiteConfig from './SiteConfig';
+import ThemeConfig from './ThemeConfig';
 
 interface SiteDb {
     rootPath: string;
-    defaultConfig: SiteConfig;
+    defaultSiteConfig: SiteConfig;
+    defaultThemeConfig: ThemeConfig;
 }
 
 /**
@@ -24,22 +26,27 @@ interface SiteDb {
  * @class Engine
  */
 export default class Engine {
-    public ejsParser: EjsParser;
-
     private engineRootPath: string;
-    private defaultConfigPath: string;
+    private defaultSiteConfigPath: string;
+    private defaultThemeConfigPath: string;
     private initFilePath: string;
     private rootPath: string;
     private draftPath: string;
     private postPath: string;
     private templatePath: string;
     private themePath: string;
-    private defaultConfig: SiteConfig;
+    private curTheme: string = Constants.DEFAULT_THEME;
+    private defaultSiteConfig: SiteConfig;
+    private customSiteConfig: SiteConfig;
+    private defaultThemeConfig: ThemeConfig;
+    private customThemeConfig: ThemeConfig;
 
     constructor() {
         this.engineRootPath = path.join(__dirname, '..' + path.sep + '..');
-        this.defaultConfigPath = path.join(this.engineRootPath, Constants.DEFAULT_CONFIG_FILE);
         this.initFilePath = path.join(this.engineRootPath, `init${path.sep}`);
+        this.defaultSiteConfigPath = path.join(this.engineRootPath, Constants.DEFAULT_SITE_CONFIG);
+        this.defaultThemeConfigPath = path.join(this.engineRootPath, 'themes',
+                                                Constants.DEFAULT_THEME, Constants.DEFAULT_THEME_CONFIG);
     }
 
     /**
@@ -62,8 +69,21 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Initializing...'))
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
-        .then(() => this.defaultConfig = yaml.safeLoad(fs.readFileSync(this.defaultConfigPath, 'utf8')))
-        .then(() => { dbData = { rootPath: this.rootPath, defaultConfig: this.defaultConfig }; })
+        .then(() => fs.copySync(this.defaultThemeConfigPath, path.join(this.rootPath, Constants.DEFAULT_THEME_CONFIG)))
+        .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')))
+        .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')))
+        .then(() =>
+            dbData = {
+                rootPath: this.rootPath,
+                defaultSiteConfig: this.defaultSiteConfig,
+                defaultThemeConfig: this.defaultThemeConfig,
+            })
+        .then(() => fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), dbData))
+        .then(() => {
+            // change working directory
+            process.chdir(this.rootPath);
+        })
+        .then(() => this.newPost('ritsu', false))
         .then(() => Log.logInfo('Fetching theme...'))
         .then(() => {
             if (commandExist.sync('git')) {
@@ -75,16 +95,10 @@ export default class Engine {
                 ` for the installation of git\n`);
             }
         })
-        .then(() => fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), dbData))
-        .then(() => {
-            // change working directory
-            process.chdir(this.rootPath);
-        })
-        .then(() => this.newPost('ritsu', false))
         .then(() => Log.logInfo('Blog successfully initialized! You can start writing :)'))
         .catch((e: Error) => {
             Log.logErr(e.message);
-            this.abortGen(e);
+            this.abortGen(e, dirName);
             return;
         });
     }
@@ -100,6 +114,7 @@ export default class Engine {
      */
     public newPost(postName: string, outputInfo: boolean = true, templateName?: string): void {
         this.readDb()
+        .then(() => this.updateConfig())
         .then(() => {
             if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
                 throw new Error('Duplicate post name');
@@ -153,10 +168,12 @@ export default class Engine {
      * @memberof Engine
      */
     public generate(dirName: string = Constants.DEFAULT_GENERATE_DIR) {
+        let ejsParser: EjsParser;
         let generatePath: string;
         let generatePathRel: string;
 
         this.readDb()
+        .then(() => this.updateConfig())
         .then(() => generatePath = path.join(this.rootPath, dirName))
         .then(() => fs.pathExists(generatePath))
         .then((exists: boolean) => {
@@ -168,18 +185,30 @@ export default class Engine {
                 ` another directory name.`, dirName);
         })
         .then(() => Log.logInfo('Generating...'))
+        .then(() => ejsParser = new EjsParser(path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR),
+                                                this.customSiteConfig, this.customThemeConfig))
         .then(() => fs.mkdir(generatePath))
         .then(() => process.chdir(generatePath))
         .then(() => {
-            fs.mkdirSync(this.defaultConfig.archiveDir);
-            fs.mkdirSync(this.defaultConfig.postDir);
+            fs.mkdirSync(this.defaultSiteConfig.archiveDir);
+            fs.mkdirSync(this.defaultSiteConfig.postDir);
         })
-        .then(() => Log.logInfo(`Blog successfully generated at ${chalk.underline.cyan(generatePathRel)}!` +
-                ` Run \`${chalk.cyan('ritsu deploy')}\` to deploy blog.`))
+        .then(() => process.chdir(ejsParser.ejsRoot))
+        .then(() => ejsParser.render())
+        .then((ejsOutput: string) => fs.outputFile(path.join(generatePath, Constants.DEFAULT_HTML_NAME), ejsOutput))
+        .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
+                                ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
             Log.logErr(e.message);
-            this.abortGen(e);
+            this.abortGen(e, generatePath);
         });
+    }
+
+    private updateConfig(): Promise<void> {
+        return fs.readFile(Constants.DEFAULT_SITE_CONFIG, 'utf8')
+        .then((siteConfigStr: string) => this.customSiteConfig = yaml.safeLoad(siteConfigStr))
+        .then(() => fs.readFile(Constants.DEFAULT_THEME_CONFIG, 'utf8'))
+        .then((themeConfigStr: string) => this.customThemeConfig = yaml.safeLoad(themeConfigStr));
     }
 
     /**
@@ -194,10 +223,12 @@ export default class Engine {
         return this.findDb(process.cwd())
             .then((data: SiteDb) => {
                 if (!data.rootPath)
-                    throw new Error('Please run this command in blog directory or initialize first');
+                    throw new Error(`Please execute this command in blog directory or run` +
+                                    ` \`${chalk.cyan('ritsu init')}\` first`);
 
                 this.rootPath = data.rootPath;
-                this.defaultConfig = data.defaultConfig;
+                this.defaultSiteConfig = data.defaultSiteConfig;
+                this.defaultThemeConfig = data.defaultThemeConfig;
                 this.initEngine(this.rootPath);
             });
     }
@@ -215,7 +246,6 @@ export default class Engine {
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
-        this.defaultConfigPath = path.join(root, 'site-config.yaml');
     }
 
     /**
@@ -257,13 +287,13 @@ export default class Engine {
      * @param {Error} engineError
      * @memberof Engine
      */
-    private abortGen(engineError: Error): void {
+    private abortGen(engineError: DuplicateError|Error, dirName: string): void {
         fs.pathExists(this.rootPath)
         .then((exists: boolean) => {
             if (exists) {
                 Log.logPlain(chalk.bgRed.black('Reverting changes...'));
                 if (!(engineError instanceof DuplicateError))
-                    spawn.sync('rm', ['-rf', engineError], { stdio: 'inherit' });
+                    spawn.sync('rm', ['-rf', dirName], { stdio: 'inherit' });
             }
         })
         .catch((e: Error) => Log.logErr(e.message));

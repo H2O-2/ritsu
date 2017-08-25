@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ejs = require("ejs");
 const path = require("path");
-const log_1 = require("./log");
 class EjsParser {
     constructor(ejsRoot, siteConfig, themeConfig) {
         this.ejsRoot = ejsRoot;
@@ -11,14 +10,13 @@ class EjsParser {
         this.themeConfig = themeConfig;
     }
     render() {
-        try {
-            ejs.renderFile(path.join(this.ejsRoot, path.sep, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig }, (renderError, data) => {
-                return data;
+        return new Promise((resolve, reject) => {
+            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig }, { rmWhitespace: true },(renderError, data) => {
+                if (renderError)
+                    reject(new Error(renderError.message));
+                resolve(data);
             });
-        }
-        catch (renderError) {
-            log_1.default.logErr(renderError.message);
-        }
+        });
     }
 }
 exports.default = EjsParser;
