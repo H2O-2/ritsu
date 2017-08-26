@@ -26,7 +26,7 @@ export default class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    init(dirName?: string): void;
+    init(dirName: string): void;
     /**
      *
      * Create a new post inside posts folder.
@@ -37,6 +37,7 @@ export default class Engine {
      * @memberof Engine
      */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    publish(postName: string, date?: string): void;
     /**
      *
      * Generate publish directory containing the full blog site in the root of blog directory.
@@ -44,7 +45,7 @@ export default class Engine {
      * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
      * @memberof Engine
      */
-    generate(dirName?: string): void;
+    generate(dirName: string): void;
     private updateConfig();
     /**
      *
@@ -81,7 +82,7 @@ export default class Engine {
      * Delete files created during a failed operation.
      *
      * @private
-     * @param {Error} engineError
+     * @param {DuplicateError|Error} engineError
      * @memberof Engine
      */
     private abortGen(engineError, dirName);

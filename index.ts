@@ -15,20 +15,27 @@ if (!process.argv.slice(2).length) {
 program.command('init [blog]').alias('i').description('Initialize a new blog').action((blog: string) => {
     const engine = new Engine();
 
-    if (blog) engine.init(`${blog}`);
-    else engine.init();
+    engine.init(blog);
 });
+
 program.command('new <post> [template]').alias('n').description('Create a new post')
        .action((post: string, template: string) => {
            const engine = new Engine();
 
            engine.newPost(post, true, template);
         });
+
+program.command('publish <post> [date]').alias('p').description('Publish the post')
+        .action((post: string, date: string) => {
+            const engine = new Engine();
+
+            engine.publish(post, date);
+        });
+
 program.command('generate [dirName]').alias('g').description('Generate Site').action((dirName: string) => {
     const engine = new Engine();
 
-    if (dirName) engine.generate(dirName);
-    else engine.generate();
+    engine.generate(dirName);
 });
 
 program.version(VER).description(DESCRIPTION).parse(process.argv);

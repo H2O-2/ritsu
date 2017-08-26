@@ -21,8 +21,8 @@ class EjsParser {
 
     public render(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig }, 
-                            { rmWhitespace: true }, (renderError: Error, data: string) => {
+            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig },
+                            (renderError: Error, data: string) => {
                                 if (renderError) reject(new Error(renderError.message));
 
                                 resolve(data);

@@ -10,6 +10,7 @@ const process = require("process");
 const constants_1 = require("./constants");
 const duplicateError_1 = require("./duplicateError");
 const ejsParser_1 = require("./ejsParser");
+const frontMatter_1 = require("./frontMatter");
 const log_1 = require("./log");
 /**
  * The Ritsu Engine, responsible for all operations of the static site generate.
@@ -31,7 +32,9 @@ class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    init(dirName = constants_1.default.DEFAULT_DIR_NAME) {
+    init(dirName) {
+        if (!dirName)
+            dirName = constants_1.default.DEFAULT_DIR_NAME;
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
@@ -123,9 +126,22 @@ class Engine {
                     newDraftPath = 'current directory';
                 }
                 log_1.default.logInfo(`New Post ${chalk.underline.black(postName)}` +
-                    ` created at ${chalk.underline.black(`${newDraftPath}`)}`);
+                    ` created at ${chalk.underline.black(`${newDraftPath}`)}.`);
+                log_1.default.logInfo(`Run \`${chalk.blue('ritsu publish', postName)}\` when you finish writing.`);
             }
         })
+            .catch((e) => log_1.default.logErr(e.message));
+    }
+    publish(postName, date) {
+        this.readDb()
+            .then(() => this.updateConfig())
+            .then(() => {
+            if (!fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
+                throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
+            }
+        })
+            .then(() => frontMatter_1.default.parsePost(path.join(this.draftPath, `${postName}.md`)))
+            .then((frontMatter) => console.log('in engine', frontMatter))
             .catch((e) => log_1.default.logErr(e.message));
     }
     /**
@@ -135,10 +151,12 @@ class Engine {
      * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
      * @memberof Engine
      */
-    generate(dirName = constants_1.default.DEFAULT_GENERATE_DIR) {
+    generate(dirName) {
         let ejsParser;
         let generatePath;
         let generatePathRel;
+        if (!dirName)
+            dirName = constants_1.default.DEFAULT_GENERATE_DIR;
         this.readDb()
             .then(() => this.updateConfig())
             .then(() => generatePath = path.join(this.rootPath, dirName))
@@ -241,7 +259,7 @@ class Engine {
      * Delete files created during a failed operation.
      *
      * @private
-     * @param {Error} engineError
+     * @param {DuplicateError|Error} engineError
      * @memberof Engine
      */
     abortGen(engineError, dirName) {

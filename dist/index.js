@@ -11,21 +11,20 @@ if (!process.argv.slice(2).length) {
 }
 program.command('init [blog]').alias('i').description('Initialize a new blog').action((blog) => {
     const engine = new engine_1.default();
-    if (blog)
-        engine.init(`${blog}`);
-    else
-        engine.init();
+    engine.init(blog);
 });
 program.command('new <post> [template]').alias('n').description('Create a new post')
     .action((post, template) => {
     const engine = new engine_1.default();
     engine.newPost(post, true, template);
 });
+program.command('publish <post> [date]').alias('p').description('Publish the post')
+    .action((post, date) => {
+    const engine = new engine_1.default();
+    engine.publish(post, date);
+});
 program.command('generate [dirName]').alias('g').description('Generate Site').action((dirName) => {
     const engine = new engine_1.default();
-    if (dirName)
-        engine.generate(dirName);
-    else
-        engine.generate();
+    engine.generate(dirName);
 });
 program.version(VER).description(DESCRIPTION).parse(process.argv);

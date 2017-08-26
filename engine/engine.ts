@@ -3,20 +3,28 @@ import * as commandExist from 'command-exists';
 import * as spawn from 'cross-spawn';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
+import * as moment from 'moment';
 import * as path from 'path';
 import * as process from 'process';
 
 import Constants from './constants';
 import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
+import FrontMatter from './frontMatter';
 import Log from './log';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
+
+interface Post {
+    title: string;
+    date: number; // Unix Timestamp (seconds)
+}
 
 interface SiteDb {
     rootPath: string;
     defaultSiteConfig: SiteConfig;
     defaultThemeConfig: ThemeConfig;
+    postData?: Post[];
 }
 
 /**
@@ -55,7 +63,9 @@ export default class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    public init(dirName: string = Constants.DEFAULT_DIR_NAME): void {
+    public init(dirName: string): void {
+        if (!dirName) dirName = Constants.DEFAULT_DIR_NAME;
+
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
@@ -154,9 +164,22 @@ export default class Engine {
                 }
 
                 Log.logInfo(`New Post ${chalk.underline.black(postName)}` +
-                ` created at ${chalk.underline.black(`${newDraftPath}`)}`);
+                ` created at ${chalk.underline.black(`${newDraftPath}`)}.`);
+                Log.logInfo(`Run \`${chalk.blue('ritsu publish', postName)}\` when you finish writing.`);
             }
         })
+        .catch((e: Error) => Log.logErr(e.message));
+    }
+
+    public publish(postName: string, date?: string) {
+        this.readDb()
+        .then(() => this.updateConfig())
+        .then(() => {
+            if (!fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
+                throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
+            }
+        })
+        .then(() => )
         .catch((e: Error) => Log.logErr(e.message));
     }
 
@@ -167,10 +190,12 @@ export default class Engine {
      * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
      * @memberof Engine
      */
-    public generate(dirName: string = Constants.DEFAULT_GENERATE_DIR) {
+    public generate(dirName: string) {
         let ejsParser: EjsParser;
         let generatePath: string;
         let generatePathRel: string;
+
+        if (!dirName) dirName = Constants.DEFAULT_GENERATE_DIR;
 
         this.readDb()
         .then(() => this.updateConfig())
@@ -204,6 +229,14 @@ export default class Engine {
         });
     }
 
+    /**
+     *
+     * Read from site-config.yaml and theme-config.yaml file and update to newest custom configs.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     private updateConfig(): Promise<void> {
         return fs.readFile(Constants.DEFAULT_SITE_CONFIG, 'utf8')
         .then((siteConfigStr: string) => this.customSiteConfig = yaml.safeLoad(siteConfigStr))
@@ -284,7 +317,7 @@ export default class Engine {
      * Delete files created during a failed operation.
      *
      * @private
-     * @param {Error} engineError
+     * @param {DuplicateError|Error} engineError
      * @memberof Engine
      */
     private abortGen(engineError: DuplicateError|Error, dirName: string): void {
