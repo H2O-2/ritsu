@@ -16,15 +16,16 @@ import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
 interface Post {
+    fileName: string;
     title: string;
-    date: number; // Unix Timestamp (seconds)
+    date: number; // Unix Timestamp (miliseconds)
 }
 
 interface SiteDb {
     rootPath: string;
     defaultSiteConfig: SiteConfig;
     defaultThemeConfig: ThemeConfig;
-    postData?: Post[];
+    postData: Post[];
 }
 
 /**
@@ -44,6 +45,7 @@ export default class Engine {
     private templatePath: string;
     private themePath: string;
     private curTheme: string = Constants.DEFAULT_THEME;
+    private curDb: SiteDb;
     private defaultSiteConfig: SiteConfig;
     private customSiteConfig: SiteConfig;
     private defaultThemeConfig: ThemeConfig;
@@ -87,8 +89,9 @@ export default class Engine {
                 rootPath: this.rootPath,
                 defaultSiteConfig: this.defaultSiteConfig,
                 defaultThemeConfig: this.defaultThemeConfig,
+                postData: [],
             })
-        .then(() => fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), dbData))
+        .then(() => fs.writeJSON(path.join(this.rootPath, Constants.DB_FILE), dbData))
         .then(() => {
             // change working directory
             process.chdir(this.rootPath);
@@ -126,8 +129,8 @@ export default class Engine {
         this.readDb()
         .then(() => this.updateConfig())
         .then(() => {
-            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
-                throw new Error('Duplicate post name');
+            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`)) || this.checkDuplicate(postName)) {
+                throw new Error(`Duplicate post name ${chalk.cyan(postName)}.`);
             }
         })
         .then(() => {
@@ -171,15 +174,36 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    /**
+     *
+     * Publish the post by moving the post to post directory and add data to .db.json.
+     *
+     * @param {string} postName 
+     * @param {string} [date] 
+     * @memberof Engine
+     */
     public publish(postName: string, date?: string) {
+        const postFile: string = `${postName}.md`;
+
+        let draftPath: string;
+
         this.readDb()
         .then(() => this.updateConfig())
         .then(() => {
-            if (!fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
+            draftPath = path.join(this.draftPath, postFile);
+
+            if (!fs.pathExistsSync(draftPath)) {
                 throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
             }
         })
-        .then(() => )
+        .then(() => Log.logInfo('Processing...'))
+        .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
+        .then(() => FrontMatter.parsePost(path.join(this.postPath, postFile)))
+        .then((frontMatter) => {
+            this.curDb.postData.push({ fileName: postName, title: frontMatter.title, date: Date.now() });
+            fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
+        })
+        .then(() => Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
         .catch((e: Error) => Log.logErr(e.message));
     }
 
@@ -229,6 +253,16 @@ export default class Engine {
         });
     }
 
+    private checkDuplicate(postName: string): boolean {
+        const postDataArr: Post[] = fs.readJsonSync(path.join(this.rootPath, Constants.DB_FILE)).postData;
+
+        for (const post of postDataArr) {
+            if (post.fileName === postName) return true;
+        }
+
+        return false;
+    }
+
     /**
      *
      * Read from site-config.yaml and theme-config.yaml file and update to newest custom configs.
@@ -262,6 +296,7 @@ export default class Engine {
                 this.rootPath = data.rootPath;
                 this.defaultSiteConfig = data.defaultSiteConfig;
                 this.defaultThemeConfig = data.defaultThemeConfig;
+                this.curDb = data;
                 this.initEngine(this.rootPath);
             });
     }

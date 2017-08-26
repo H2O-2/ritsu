@@ -54,8 +54,9 @@ class Engine {
             rootPath: this.rootPath,
             defaultSiteConfig: this.defaultSiteConfig,
             defaultThemeConfig: this.defaultThemeConfig,
+            postData: [],
         })
-            .then(() => fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
+            .then(() => fs.writeJSON(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
             .then(() => {
             // change working directory
             process.chdir(this.rootPath);
@@ -92,8 +93,8 @@ class Engine {
         this.readDb()
             .then(() => this.updateConfig())
             .then(() => {
-            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
-                throw new Error('Duplicate post name');
+            if (fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`)) || this.checkDuplicate(postName)) {
+                throw new Error(`Duplicate post name ${chalk.cyan(postName)}.`);
             }
         })
             .then(() => {
@@ -132,16 +133,33 @@ class Engine {
         })
             .catch((e) => log_1.default.logErr(e.message));
     }
+    /**
+     *
+     * Publish the post by moving the post to post directory and add data to .db.json.
+     *
+     * @param {string} postName
+     * @param {string} [date]
+     * @memberof Engine
+     */
     publish(postName, date) {
+        const postFile = `${postName}.md`;
+        let draftPath;
         this.readDb()
             .then(() => this.updateConfig())
             .then(() => {
-            if (!fs.pathExistsSync(path.join(this.draftPath, `${postName}.md`))) {
+            draftPath = path.join(this.draftPath, postFile);
+            if (!fs.pathExistsSync(draftPath)) {
                 throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
             }
         })
-            .then(() => frontMatter_1.default.parsePost(path.join(this.draftPath, `${postName}.md`)))
-            .then((frontMatter) => console.log('in engine', frontMatter))
+            .then(() => log_1.default.logInfo('Processing...'))
+            .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
+            .then(() => frontMatter_1.default.parsePost(path.join(this.postPath, postFile)))
+            .then((frontMatter) => {
+            this.curDb.postData.push({ fileName: postName, title: frontMatter.title, date: Date.now() });
+            fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
+        })
+            .then(() => log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
             .catch((e) => log_1.default.logErr(e.message));
     }
     /**
@@ -186,6 +204,22 @@ class Engine {
             this.abortGen(e, generatePath);
         });
     }
+    checkDuplicate(postName) {
+        const postDataArr = fs.readJsonSync(path.join(this.rootPath, constants_1.default.DB_FILE)).postData;
+        for (const post of postDataArr) {
+            if (post.fileName === postName)
+                return true;
+        }
+        return false;
+    }
+    /**
+     *
+     * Read from site-config.yaml and theme-config.yaml file and update to newest custom configs.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     updateConfig() {
         return fs.readFile(constants_1.default.DEFAULT_SITE_CONFIG, 'utf8')
             .then((siteConfigStr) => this.customSiteConfig = yaml.safeLoad(siteConfigStr))
@@ -209,6 +243,7 @@ class Engine {
             this.rootPath = data.rootPath;
             this.defaultSiteConfig = data.defaultSiteConfig;
             this.defaultThemeConfig = data.defaultThemeConfig;
+            this.curDb = data;
             this.initEngine(this.rootPath);
         });
     }

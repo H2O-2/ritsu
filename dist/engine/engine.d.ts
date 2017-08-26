@@ -15,6 +15,7 @@ export default class Engine {
     private templatePath;
     private themePath;
     private curTheme;
+    private curDb;
     private defaultSiteConfig;
     private customSiteConfig;
     private defaultThemeConfig;
@@ -37,6 +38,14 @@ export default class Engine {
      * @memberof Engine
      */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    /**
+     *
+     * Publish the post by moving the post to post directory and add data to .db.json.
+     *
+     * @param {string} postName
+     * @param {string} [date]
+     * @memberof Engine
+     */
     publish(postName: string, date?: string): void;
     /**
      *
@@ -46,6 +55,15 @@ export default class Engine {
      * @memberof Engine
      */
     generate(dirName: string): void;
+    private checkDuplicate(postName);
+    /**
+     *
+     * Read from site-config.yaml and theme-config.yaml file and update to newest custom configs.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof Engine
+     */
     private updateConfig();
     /**
      *

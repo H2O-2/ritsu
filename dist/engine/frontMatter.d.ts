@@ -1,8 +1,6 @@
-import * as Moment from 'moment';
 export interface FrontMatterObj {
     title: string;
     tags: string[];
-    date?: Moment.Moment;
 }
 /**
  *
