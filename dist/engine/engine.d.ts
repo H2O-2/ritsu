@@ -14,6 +14,7 @@ export default class Engine {
     private postPath;
     private templatePath;
     private themePath;
+    private trashPath;
     private curTheme;
     private curDb;
     private defaultSiteConfig;
@@ -38,6 +39,14 @@ export default class Engine {
      * @memberof Engine
      */
     newPost(postName: string, outputInfo?: boolean, templateName?: string): void;
+    /**
+     *
+     * Delete the post from post directory and .db.json.
+     *
+     * @param {string} postName
+     * @memberof Engine
+     */
+    delete(postName: string): void;
     /**
      *
      * Publish the post by moving the post to post directory and add data to .db.json.

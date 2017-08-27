@@ -135,6 +135,46 @@ class Engine {
     }
     /**
      *
+     * Delete the post from post directory and .db.json.
+     *
+     * @param {string} postName
+     * @memberof Engine
+     */
+    delete(postName) {
+        const postFile = `${postName}.md`;
+        const dneError = new Error(`Post ${chalk.cyan(postName)} is either not published or does not exist.`);
+        this.readDb()
+            .then(() => {
+            if (!fs.pathExistsSync(path.join(this.postPath, postFile))) {
+                throw dneError;
+            }
+            else if (fs.pathExistsSync(path.join(this.trashPath, postFile))) {
+                throw new Error(`A post with the same name already exists in directory` +
+                    ` ${chalk.blue(path.relative(process.cwd(), this.trashPath))}.`);
+            }
+        })
+            .then(() => log_1.default.logInfo('Deleting...'))
+            .then(() => fs.move(path.join(this.postPath, postFile), path.join(this.trashPath, postFile)))
+            .then(() => {
+            const postDataArr = this.curDb.postData;
+            for (let i = 0; i < postDataArr.length; i++) {
+                if (postDataArr[i].fileName === postName) {
+                    this.curDb.postData.splice(i, 1);
+                    fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
+                    return;
+                }
+            }
+            throw dneError;
+        })
+            .then(() => log_1.default.logInfo(`Successfully deleted your post ${chalk.blue(postName)}, you can still find the post` +
+            ` inside ${chalk.blue(path.relative(process.cwd(), this.trashPath))} folder.`))
+            .then(() => log_1.default.logInfo(`If you want to restore the post, move it to` +
+            ` ${chalk.blue(path.relative(process.cwd(), this.draftPath))} folder` +
+            ` and publish it again`))
+            .catch((e) => log_1.default.logErr(e.message));
+    }
+    /**
+     *
      * Publish the post by moving the post to post directory and add data to .db.json.
      *
      * @param {string} postName
@@ -160,6 +200,7 @@ class Engine {
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
         })
             .then(() => log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
+            .then(() => log_1.default.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to`))
             .catch((e) => log_1.default.logErr(e.message));
     }
     /**
@@ -260,6 +301,7 @@ class Engine {
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
+        this.trashPath = path.join(root, 'trash');
     }
     /**
      *

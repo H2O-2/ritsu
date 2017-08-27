@@ -25,6 +25,12 @@ program.command('new <post> [template]').alias('n').description('Create a new po
            engine.newPost(post, true, template);
         });
 
+program.command('delete <post>').alias('d').description('Delete the post').action((post: string) => {
+    const engine = new Engine();
+
+    engine.delete(post);
+})
+
 program.command('publish <post> [date]').alias('p').description('Publish the post')
         .action((post: string, date: string) => {
             const engine = new Engine();

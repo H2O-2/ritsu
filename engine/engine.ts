@@ -44,6 +44,7 @@ export default class Engine {
     private postPath: string;
     private templatePath: string;
     private themePath: string;
+    private trashPath: string;
     private curTheme: string = Constants.DEFAULT_THEME;
     private curDb: SiteDb;
     private defaultSiteConfig: SiteConfig;
@@ -176,10 +177,53 @@ export default class Engine {
 
     /**
      *
+     * Delete the post from post directory and .db.json.
+     *
+     * @param {string} postName
+     * @memberof Engine
+     */
+    public delete(postName: string) {
+        const postFile: string = `${postName}.md`;
+        const dneError: Error = new Error(`Post ${chalk.cyan(postName)} is either not published or does not exist.`);
+
+        this.readDb()
+        .then(() => {
+            if (!fs.pathExistsSync(path.join(this.postPath, postFile))) {
+                throw dneError;
+            } else if (fs.pathExistsSync(path.join(this.trashPath, postFile))) {
+                throw new Error(`A post with the same name already exists in directory` +
+                                ` ${chalk.blue(path.relative(process.cwd(), this.trashPath))}.`);
+            }
+        })
+        .then(() => Log.logInfo('Deleting...'))
+        .then(() => fs.move(path.join(this.postPath, postFile), path.join(this.trashPath, postFile)))
+        .then(() => {
+            const postDataArr: Post[] = this.curDb.postData;
+
+            for (let i = 0; i < postDataArr.length; i++) {
+                if (postDataArr[i].fileName === postName) {
+                    this.curDb.postData.splice(i, 1);
+                    fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
+                    return;
+                }
+            }
+
+            throw dneError;
+        })
+        .then(() => Log.logInfo(`Successfully deleted your post ${chalk.blue(postName)}, you can still find the post` +
+                                ` inside ${chalk.blue(path.relative(process.cwd(), this.trashPath))} folder.`))
+        .then(() => Log.logInfo(`If you want to restore the post, move it to` +
+                                ` ${chalk.blue(path.relative(process.cwd(), this.draftPath))} folder` +
+                                ` and publish it again`))
+        .catch((e: Error) => Log.logErr(e.message));
+    }
+
+    /**
+     *
      * Publish the post by moving the post to post directory and add data to .db.json.
      *
-     * @param {string} postName 
-     * @param {string} [date] 
+     * @param {string} postName
+     * @param {string} [date]
      * @memberof Engine
      */
     public publish(postName: string, date?: string) {
@@ -204,6 +248,7 @@ export default class Engine {
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
         })
         .then(() => Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
+        .then(() => Log.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to`))
         .catch((e: Error) => Log.logErr(e.message));
     }
 
@@ -314,6 +359,7 @@ export default class Engine {
         this.postPath = path.join(root, 'posts');
         this.templatePath = path.join(root, 'templates');
         this.themePath = path.join(root, 'themes');
+        this.trashPath = path.join(root, 'trash');
     }
 
     /**
