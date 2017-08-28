@@ -64,6 +64,15 @@ export default class Engine {
      * @memberof Engine
      */
     generate(dirName: string): void;
+    /**
+     *
+     * Check if postName already exists in .db.json
+     *
+     * @private
+     * @param {string} postName
+     * @returns {boolean}
+     * @memberof Engine
+     */
     private checkDuplicate(postName);
     /**
      *

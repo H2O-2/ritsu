@@ -4,7 +4,9 @@ const chalk = require("chalk");
 const commandExist = require("command-exists");
 const spawn = require("cross-spawn");
 const fs = require("fs-extra");
+const hljs = require("highlight.js");
 const yaml = require("js-yaml");
+const marked = require("marked");
 const path = require("path");
 const process = require("process");
 const constants_1 = require("./constants");
@@ -236,7 +238,16 @@ class Engine {
             fs.mkdirSync(this.defaultSiteConfig.postDir);
         })
             .then(() => process.chdir(ejsParser.ejsRoot))
-            .then(() => ejsParser.render())
+            .then(() => {
+            marked.setOptions({
+                langPrefix: 'hljs ',
+                highlight(code) {
+                    return hljs.highlightAuto(code).value;
+                },
+            });
+            return marked(fs.readFileSync(path.join(this.postPath, 'test.md'), 'utf8'));
+        })
+            .then((markedContent) => ejsParser.render(markedContent))
             .then((ejsOutput) => fs.outputFile(path.join(generatePath, constants_1.default.DEFAULT_HTML_NAME), ejsOutput))
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
@@ -245,6 +256,15 @@ class Engine {
             this.abortGen(e, generatePath);
         });
     }
+    /**
+     *
+     * Check if postName already exists in .db.json
+     *
+     * @private
+     * @param {string} postName
+     * @returns {boolean}
+     * @memberof Engine
+     */
     checkDuplicate(postName) {
         const postDataArr = fs.readJsonSync(path.join(this.rootPath, constants_1.default.DB_FILE)).postData;
         for (const post of postDataArr) {

@@ -5,6 +5,6 @@ declare class EjsParser {
     private siteConfig;
     private themeConfig;
     constructor(ejsRoot: string, siteConfig: SiteConfig, themeConfig: ThemeConfig);
-    render(): Promise<string>;
+    render(mainContent: string): Promise<string>;
 }
 export default EjsParser;

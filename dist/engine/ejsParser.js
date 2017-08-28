@@ -9,9 +9,9 @@ class EjsParser {
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
     }
-    render() {
+    render(mainContent) {
         return new Promise((resolve, reject) => {
-            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig }, (renderError, data) => {
+            ejs.renderFile(path.join(this.ejsRoot, 'layout.ejs'), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }, (renderError, data) => {
                 if (renderError)
                     reject(new Error(renderError.message));
                 resolve(data);

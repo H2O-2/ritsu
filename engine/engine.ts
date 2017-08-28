@@ -2,7 +2,9 @@ import * as chalk from 'chalk';
 import * as commandExist from 'command-exists';
 import * as spawn from 'cross-spawn';
 import * as fs from 'fs-extra';
+import * as hljs from 'highlight.js';
 import * as yaml from 'js-yaml';
+import * as marked from 'marked';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as process from 'process';
@@ -280,16 +282,25 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Generating...'))
         .then(() => ejsParser = new EjsParser(path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR),
-                                                this.customSiteConfig, this.customThemeConfig))
+                                                this.postPath, this.customSiteConfig, this.customThemeConfig))
         .then(() => fs.mkdir(generatePath))
         .then(() => process.chdir(generatePath))
         .then(() => {
             fs.mkdirSync(this.defaultSiteConfig.archiveDir);
             fs.mkdirSync(this.defaultSiteConfig.postDir);
+            fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
         .then(() => process.chdir(ejsParser.ejsRoot))
-        .then(() => ejsParser.render())
-        .then((ejsOutput: string) => fs.outputFile(path.join(generatePath, Constants.DEFAULT_HTML_NAME), ejsOutput))
+        .then(() => {
+            const fileArr: string[] = [];
+
+            for (const post of this.curDb.postData) {
+                fileArr.push(post.fileName);
+            }
+
+            return fileArr;
+        })
+        .then((fileArr: string[]) => ejsParser.render(fileArr))
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
@@ -298,6 +309,15 @@ export default class Engine {
         });
     }
 
+    /**
+     *
+     * Check if postName already exists in .db.json
+     *
+     * @private
+     * @param {string} postName
+     * @returns {boolean}
+     * @memberof Engine
+     */
     private checkDuplicate(postName: string): boolean {
         const postDataArr: Post[] = fs.readJsonSync(path.join(this.rootPath, Constants.DB_FILE)).postData;
 
