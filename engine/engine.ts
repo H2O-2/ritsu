@@ -282,12 +282,9 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Generating...'))
         .then(() => ejsParser = new EjsParser(path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR),
-                                                this.postPath, this.customSiteConfig, this.customThemeConfig))
+                                            generatePath, this.postPath, this.customSiteConfig, this.customThemeConfig))
         .then(() => fs.mkdir(generatePath))
-        .then(() => process.chdir(generatePath))
         .then(() => {
-            fs.mkdirSync(this.defaultSiteConfig.archiveDir);
-            fs.mkdirSync(this.defaultSiteConfig.postDir);
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
         .then(() => process.chdir(ejsParser.ejsRoot))

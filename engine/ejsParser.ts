@@ -13,11 +13,13 @@ class EjsParser {
     public readonly ejsRoot: string;
 
     private postRoot: string;
+    private generatePath: string;
     private siteConfig: SiteConfig;
     private themeConfig: ThemeConfig;
     private layoutPath: string;
 
-    constructor(ejsRoot: string, postRoot: string, siteConfig: SiteConfig, themeConfig: ThemeConfig) {
+    constructor(ejsRoot: string, postRoot: string, generatePath: string,
+                siteConfig: SiteConfig, themeConfig: ThemeConfig) {
         this.ejsRoot = ejsRoot;
         this.postRoot = postRoot;
         this.siteConfig = siteConfig;
@@ -28,8 +30,24 @@ class EjsParser {
     public render(fileArr: string[]): Promise<void> {
         return this.renderPost(fileArr)
         .then(() => this.renderPage(Constants.DEFAULT_HTML_NAME, false))
-        .then(() => this.renderPage('archive'));
-        // Add header links
+        .then(() => this.renderPage(path.join(this.generatePath, this.siteConfig.archiveDir)))
+        .then(() => this.renderPage(path.join(this.generatePath, this.siteConfig.postDir)))
+        .then(() => {
+            // reference:
+            // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
+            const isAbsolute: RegExp = new RegExp('^(?:[a-z]+:)?//', 'i');
+            const headers = this.themeConfig.header;
+
+            for (const headName in headers) {
+                if (headers.hasOwnProperty(headName)) {
+                    const headLink: string = path.join(this.generatePath, headers[headName]);
+
+                    if (isAbsolute.test(headers[headName]) || fs.pathExistsSync(headLink)) continue;
+
+                    this.renderPage(headLink);
+                }
+            }
+        });
     }
 
     private renderPost(fileArr: string[]): Promise<void> {
@@ -67,8 +85,9 @@ class EjsParser {
         });
     }
 
-    private renderPage(pageName: string, createDir: boolean = true): Promise<void> {
+    private renderPage(dirName: string, createDir: boolean = true): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (createDir) fs.mkdir(dirName);
 
             ejs.renderFile(this.layoutPath,
                         { site: this.siteConfig, theme: this.themeConfig, contents: mainContent },
