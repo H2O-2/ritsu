@@ -4,9 +4,7 @@ const chalk = require("chalk");
 const commandExist = require("command-exists");
 const spawn = require("cross-spawn");
 const fs = require("fs-extra");
-const hljs = require("highlight.js");
 const yaml = require("js-yaml");
-const marked = require("marked");
 const path = require("path");
 const process = require("process");
 const constants_1 = require("./constants");
@@ -32,6 +30,7 @@ class Engine {
      * Initialize an empty directory to a blog container.
      *
      * @returns {void}
+     * @param {string} dirName
      * @memberof Engine
      */
     init(dirName) {
@@ -202,14 +201,14 @@ class Engine {
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
         })
             .then(() => log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
-            .then(() => log_1.default.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to`))
+            .then(() => log_1.default.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to build your blog.`))
             .catch((e) => log_1.default.logErr(e.message));
     }
     /**
      *
      * Generate publish directory containing the full blog site in the root of blog directory.
      *
-     * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
+     * @param {string} [dirName]
      * @memberof Engine
      */
     generate(dirName) {
@@ -230,25 +229,19 @@ class Engine {
                     ` another directory name.`, dirName);
         })
             .then(() => log_1.default.logInfo('Generating...'))
-            .then(() => ejsParser = new ejsParser_1.default(path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR), this.customSiteConfig, this.customThemeConfig))
+            .then(() => ejsParser = new ejsParser_1.default(path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR), this.postPath, generatePath, this.customSiteConfig, this.customThemeConfig))
             .then(() => fs.mkdir(generatePath))
-            .then(() => process.chdir(generatePath))
             .then(() => {
-            fs.mkdirSync(this.defaultSiteConfig.archiveDir);
-            fs.mkdirSync(this.defaultSiteConfig.postDir);
+            fs.mkdirSync(path.join(generatePath, constants_1.default.RES_DIR));
         })
-            .then(() => process.chdir(ejsParser.ejsRoot))
             .then(() => {
-            marked.setOptions({
-                langPrefix: 'hljs ',
-                highlight(code) {
-                    return hljs.highlightAuto(code).value;
-                },
-            });
-            return marked(fs.readFileSync(path.join(this.postPath, 'test.md'), 'utf8'));
+            const fileArr = [];
+            for (const post of this.curDb.postData) {
+                fileArr.push(post.fileName);
+            }
+            return fileArr;
         })
-            .then((markedContent) => ejsParser.render(markedContent))
-            .then((ejsOutput) => fs.outputFile(path.join(generatePath, constants_1.default.DEFAULT_HTML_NAME), ejsOutput))
+            .then((fileArr) => ejsParser.render(fileArr))
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {
@@ -357,6 +350,7 @@ class Engine {
      *
      * @private
      * @param {DuplicateError|Error} engineError
+     * @param {string} dirName
      * @memberof Engine
      */
     abortGen(engineError, dirName) {

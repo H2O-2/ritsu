@@ -26,6 +26,7 @@ export default class Engine {
      * Initialize an empty directory to a blog container.
      *
      * @returns {void}
+     * @param {string} dirName
      * @memberof Engine
      */
     init(dirName: string): void;
@@ -60,7 +61,7 @@ export default class Engine {
      *
      * Generate publish directory containing the full blog site in the root of blog directory.
      *
-     * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
+     * @param {string} [dirName]
      * @memberof Engine
      */
     generate(dirName: string): void;
@@ -119,6 +120,7 @@ export default class Engine {
      *
      * @private
      * @param {DuplicateError|Error} engineError
+     * @param {string} dirName
      * @memberof Engine
      */
     private abortGen(engineError, dirName);

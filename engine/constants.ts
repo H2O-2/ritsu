@@ -12,6 +12,7 @@ export default class Constants {
 
     public static readonly EJS_DIR: string = 'view';
     public static readonly EJS_PART_DIR: string = 'parts';
+    public static readonly EJS_INDEX: string = 'index.ejs';
     public static readonly EJS_LAYOUT: string = 'layout.ejs';
     public static readonly EJS_POST: string = 'post.ejs';
     public static readonly EJS_ARCHIVE: string = 'archive.ejs';

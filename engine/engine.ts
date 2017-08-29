@@ -66,6 +66,7 @@ export default class Engine {
      * Initialize an empty directory to a blog container.
      *
      * @returns {void}
+     * @param {string} dirName
      * @memberof Engine
      */
     public init(dirName: string): void {
@@ -250,7 +251,7 @@ export default class Engine {
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
         })
         .then(() => Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
-        .then(() => Log.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to`))
+        .then(() => Log.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to build your blog.`))
         .catch((e: Error) => Log.logErr(e.message));
     }
 
@@ -258,7 +259,7 @@ export default class Engine {
      *
      * Generate publish directory containing the full blog site in the root of blog directory.
      *
-     * @param {string} [dirName=Constants.DEFAULT_GENERATE_DIR]
+     * @param {string} [dirName]
      * @memberof Engine
      */
     public generate(dirName: string) {
@@ -282,12 +283,11 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Generating...'))
         .then(() => ejsParser = new EjsParser(path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR),
-                                            generatePath, this.postPath, this.customSiteConfig, this.customThemeConfig))
+                                            this.postPath, generatePath, this.customSiteConfig, this.customThemeConfig))
         .then(() => fs.mkdir(generatePath))
         .then(() => {
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
-        .then(() => process.chdir(ejsParser.ejsRoot))
         .then(() => {
             const fileArr: string[] = [];
 
@@ -416,6 +416,7 @@ export default class Engine {
      *
      * @private
      * @param {DuplicateError|Error} engineError
+     * @param {string} dirName
      * @memberof Engine
      */
     private abortGen(engineError: DuplicateError|Error, dirName: string): void {

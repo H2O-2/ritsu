@@ -1,10 +1,27 @@
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 declare class EjsParser {
-    readonly ejsRoot: string;
+    private ejsRoot;
+    private postRoot;
+    private generatePath;
     private siteConfig;
     private themeConfig;
-    constructor(ejsRoot: string, siteConfig: SiteConfig, themeConfig: ThemeConfig);
-    render(mainContent: string): Promise<string>;
+    private layoutPath;
+    constructor(ejsRoot: string, postRoot: string, generatePath: string, siteConfig: SiteConfig, themeConfig: ThemeConfig);
+    render(fileArr: string[]): Promise<void>;
+    private renderHeader();
+    private renderPost(fileArr);
+    private renderPage(ejsFile, dirName, createDir?);
+    /**
+     *
+     * A promisified version of ejs.renderFile().
+     *
+     * @private
+     * @param {string} filePath
+     * @param {ejs.Data} data
+     * @returns {Promise<string>}
+     * @memberof EjsParser
+     */
+    private renderFile(filePath, data);
 }
 export default EjsParser;

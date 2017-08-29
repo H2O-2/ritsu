@@ -11,4 +11,9 @@ export default class Constants {
     static readonly DEFAULT_HTML_NAME: string;
     static readonly EJS_DIR: string;
     static readonly EJS_PART_DIR: string;
+    static readonly EJS_INDEX: string;
+    static readonly EJS_LAYOUT: string;
+    static readonly EJS_POST: string;
+    static readonly EJS_ARCHIVE: string;
+    static readonly RES_DIR: string;
 }
