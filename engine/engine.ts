@@ -101,6 +101,7 @@ export default class Engine {
             process.chdir(this.rootPath);
         })
         .then(() => this.newPost('ritsu', false))
+        .then(() => this.publish('ritsu', undefined, false))
         .then(() => Log.logInfo('Fetching theme...'))
         .then(() => {
             if (commandExist.sync('git')) {
@@ -229,7 +230,7 @@ export default class Engine {
      * @param {string} [date]
      * @memberof Engine
      */
-    public publish(postName: string, date?: string) {
+    public publish(postName: string, date?: string, outputInfo: boolean = true) {
         const postFile: string = `${postName}.md`;
 
         let draftPath: string;
@@ -243,15 +244,21 @@ export default class Engine {
                 throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
             }
         })
-        .then(() => Log.logInfo('Processing...'))
+        .then(() => {
+            if (outputInfo)
+                Log.logInfo('Processing...');
+        })
         .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
         .then(() => FrontMatter.parsePost(path.join(this.postPath, postFile)))
         .then((frontMatter) => {
             this.curDb.postData.push({ fileName: postName, title: frontMatter.title, date: Date.now() });
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
         })
-        .then(() => Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.`))
-        .then(() => Log.logInfo(`Run \`${chalk.blue('ritsu generate')}\` to build your blog.`))
+        .then(() => {
+            if (outputInfo)
+                Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
+                            `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
+        })
         .catch((e: Error) => Log.logErr(e.message));
     }
 

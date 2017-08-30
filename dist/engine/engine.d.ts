@@ -56,7 +56,7 @@ export default class Engine {
      * @param {string} [date]
      * @memberof Engine
      */
-    publish(postName: string, date?: string): void;
+    publish(postName: string, date?: string, outputInfo?: boolean): void;
     /**
      *
      * Generate publish directory containing the full blog site in the root of blog directory.
