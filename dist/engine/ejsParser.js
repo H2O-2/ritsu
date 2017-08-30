@@ -21,8 +21,8 @@ class EjsParser {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
             .then(() => this.renderPost(fileArr))
             .then(() => this.renderHeader())
-            .then(() => this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, false))
-            .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir)));
+            .then(() => this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true))
+            .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true));
     }
     renderHeader() {
         // reference:
@@ -38,7 +38,7 @@ class EjsParser {
                     .then((exists) => {
                     if (exists || isAbsolute.test(headers[headName]))
                         return;
-                    return this.renderPage(`${headName.toLowerCase()}.ejs`, headLink);
+                    return this.renderPage(`${headName.toLowerCase()}.ejs`, headLink, true);
                 }));
             }
         }
@@ -60,66 +60,28 @@ class EjsParser {
                 mainContent = marked(fileStr);
             })
                 .then(() => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
-                .then((postHtml) => this.renderPage(this.layoutPath, path.join(this.generatePath, this.siteConfig.postDir, Date.now().toString()))));
+                .then((postHtml) => this.renderPage(postHtml, path.join(this.generatePath, this.siteConfig.postDir, Date.now().toString()), false)));
         }
         return Promise.all(renderPromiseArr);
-        // return new Promise<void>((resolve, reject) => {
-        //     const contentArr: string[] = [];
-        //     let mainContent: string;
-        //     try {
-        //         for (const fileName of fileArr) {
-        //             // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
-        //             marked.setOptions({
-        //                 langPrefix: 'hljs ',
-        //                 highlight(code) {
-        //                     return hljs.highlightAuto(code).value;
-        //                 },
-        //             });
-        //             mainContent = marked(fs.readFileSync(path.join(this.postRoot, `${fileName}.md`), 'utf8'));
-        //             ejs.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
-        //                 { site: this.siteConfig, theme: this.themeConfig, contents: mainContent },
-        //                 (renderPostError: Error, data: string) => {
-        //                     if (renderPostError) reject(renderPostError);
-        //                     ejs.renderFile(this.layoutPath,
-        //                         { site: this.siteConfig, theme: this.themeConfig, contents: data },
-        //                         (renderPageError: Error, output: string) => {
-        //                             if (renderPageError) reject(renderPageError);
-        //                             const curTime = Date.now().toString();
-        //                             this.renderPage(curTime, path.join(this.generatePath, curTime));
-        //                         });
-        //                 });
-        //         }
-        //         resolve();
-        //     } catch (e) {
-        //         reject(e);
-        //     }
-        // });
     }
-    renderPage(ejsFile, dirName, createDir = true) {
+    renderPage(ejsData, dirName, inputFile, createDir = true) {
+        let mainContent;
         return fs.pathExists(dirName)
             .then((exists) => {
             if (!exists && createDir)
                 fs.mkdirSync(dirName);
         })
             .then(() => process.chdir(this.ejsRoot))
-            .then(() => fs.pathExists(ejsFile))
-            .then((exists) => {
-            if (!exists)
-                throw new Error(`Please create ${chalk.cyan(ejsFile)} first.`);
+            .then(() => {
+            if (inputFile && !fs.pathExistsSync(ejsData))
+                throw new Error(`Please create ${chalk.cyan(ejsData)} first.`);
+            else if (inputFile)
+                mainContent = fs.readFileSync(ejsData, 'utf8'); // ejsData as file path
+            else
+                mainContent = ejsData; // ejsData as EJS or HTML string
         })
-            .then(() => this.renderFile(this.layoutPath, { site: this.siteConfig, theme: this.themeConfig, contents: fs.readFileSync(ejsFile, 'utf8') }))
+            .then(() => this.renderFile(this.layoutPath, { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
             .then((htmlStr) => fs.writeFile(path.join(dirName, constants_1.default.DEFAULT_HTML_NAME), htmlStr));
-        // return new Promise<void>((resolve, reject) => {
-        //     if (createDir) fs.mkdirSync(dirName);
-        //     process.chdir(this.ejsRoot);
-        //     ejs.renderFile(this.layoutPath,
-        //         { site: this.siteConfig, theme: this.themeConfig, contents: fs.readFileSync(ejsFile, 'utf8') },
-        //         (renderError: Error, data: string) => {
-        //             if (renderError) reject(renderError);
-        //             fs.writeFileSync(path.join(dirName, Constants.DEFAULT_HTML_NAME), data);
-        //             resolve();
-        //     });
-        // });
     }
     /**
      *

@@ -39,7 +39,7 @@ class Engine {
         dirName += path.sep;
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
-        const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME, path.sep);
+        const defaultThemePath = path.join(this.themePath, constants_1.default.DEFAULT_THEME);
         let dbData;
         fs.pathExists(this.rootPath)
             .then((exists) => {

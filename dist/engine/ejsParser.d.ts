@@ -11,7 +11,7 @@ declare class EjsParser {
     render(fileArr: string[]): Promise<void>;
     private renderHeader();
     private renderPost(fileArr);
-    private renderPage(ejsFile, dirName, createDir?);
+    private renderPage(ejsData, dirName, inputFile, createDir?);
     /**
      *
      * A promisified version of ejs.renderFile().

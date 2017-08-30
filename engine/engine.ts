@@ -76,7 +76,7 @@ export default class Engine {
         this.rootPath = path.join(process.cwd(), dirName);
         this.initEngine(this.rootPath);
 
-        const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME, path.sep);
+        const defaultThemePath: string = path.join(this.themePath, Constants.DEFAULT_THEME);
         let dbData: SiteDb;
 
         fs.pathExists(this.rootPath)
