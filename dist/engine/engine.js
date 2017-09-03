@@ -236,9 +236,9 @@ class Engine {
                     ` another directory name.`, dirName);
         })
             .then(() => log_1.default.logInfo('Generating...'))
-            .then(() => ejsParser = new ejsParser_1.default(path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR), this.postPath, generatePath, this.customSiteConfig, this.customThemeConfig))
-            .then(() => fs.mkdir(generatePath))
+            .then(() => ejsParser = new ejsParser_1.default(this.rootPath, this.postPath, generatePath, this.themePath, this.customSiteConfig, this.customThemeConfig))
             .then(() => {
+            fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, constants_1.default.RES_DIR));
         })
             .then(() => {
@@ -345,7 +345,7 @@ class Engine {
             else {
                 const parent = path.dirname(curPath);
                 if (parent === curPath)
-                    return {};
+                    return;
                 return this.findDb(parent);
             }
         })

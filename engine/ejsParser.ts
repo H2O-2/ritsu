@@ -12,32 +12,61 @@ import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
 class EjsParser {
+    private rootPath: string;
     private ejsRoot: string;
     private postRoot: string;
     private generatePath: string;
+    private themePath: string;
     private siteConfig: SiteConfig;
     private themeConfig: ThemeConfig;
     private layoutPath: string;
 
-    constructor(ejsRoot: string, postRoot: string, generatePath: string,
+    constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string,
                 siteConfig: SiteConfig, themeConfig: ThemeConfig) {
-        this.ejsRoot = ejsRoot;
+        this.rootPath = rootPath;
         this.postRoot = postRoot;
         this.generatePath = generatePath;
+        this.themePath = themePath;
+        this.ejsRoot = path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR);
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, Constants.EJS_LAYOUT);
+
+        // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
+        marked.setOptions({
+            langPrefix: 'hljs ',
+            highlight(code) {
+                return hljs.highlightAuto(code).value;
+            },
+        });
     }
 
+    /**
+     *
+     * Render all EJS files.
+     *
+     * @param {string[]} fileArr
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     public render(fileArr: string[]): Promise<void> {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
         .then(() => this.renderPost(fileArr))
         .then(() => this.renderHeader())
-        .then(() => this.renderPage(Constants.EJS_INDEX, this.generatePath, true))
-        .then(() =>
-            this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true));
+        .then(() => this.renderPage(Constants.EJS_INDEX, this.generatePath, true, true))
+        .then(() => this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir),
+                    true, false))
+        .catch((e: Error) => { throw e; });
     }
 
+    /**
+     *
+     * Render all pages that header links directs to.
+     *
+     * @private
+     * @returns {Promise<void[]>}
+     * @memberof EjsParser
+     */
     private renderHeader(): Promise<void[]> {
         // reference:
         // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
@@ -53,9 +82,10 @@ class EjsParser {
                 headerPromiseArr.push(
                     fs.pathExists(headLink)
                     .then((exists) => {
-                        if (exists || isAbsolute.test(headers[headName])) return;
-
-                        return this.renderPage(`${headName.toLowerCase()}.ejs`, headLink, true);
+                        if (!exists && !isAbsolute.test(headers[headName])) {
+                            return this.renderPage(path.join(this.themePath, Constants.CUSTOM_HEADER_DIR,
+                                                    `${headName.toLowerCase()}.ejs`), headLink, true, false);
+                        }
                     }),
                 );
             }
@@ -64,35 +94,54 @@ class EjsParser {
         return Promise.all(headerPromiseArr);
     }
 
-    private renderPost(fileArr: string[]): Promise<void[]> {
-        // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
-        marked.setOptions({
-            langPrefix: 'hljs ',
-            highlight(code) {
-                return hljs.highlightAuto(code).value;
-            },
+    /**
+     *
+     * Render all post pages.
+     *
+     * @private
+     * @param {string[]} fileArr
+     * @param {number} [fileIndex=0]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
+    private renderPost(fileArr: string[], fileIndex: number = 0): Promise<void> {
+        const fileName: string = fileArr[fileIndex];
+
+        return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
+        .then((fileStr: string) => {
+            return marked(fileStr);
+        })
+        .then((mainContent: string) => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
+            { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
+        .then((postHtml: string) => {
+            const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+
+            return this.renderPage(postHtml,
+                path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')),
+                            false, false);
+        })
+        .then(() => {
+            if (fileIndex < fileArr.length - 1) {
+                return this.renderPost(fileArr, fileIndex + 1);
+            }
         });
-
-        const renderPromiseArr: Array<Promise<void>> = [];
-
-        let mainContent: string;
-
-        for (const fileName of fileArr) {
-            renderPromiseArr.push(
-                fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
-                .then((fileStr: string) => {
-                    mainContent = marked(fileStr);
-                })
-                .then(() => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
-                    { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
-                .then((postHtml: string) => this.renderPage(postHtml,
-                        path.join(this.generatePath, this.siteConfig.postDir, Date.now().toString()), false)));
-        }
-
-        return Promise.all(renderPromiseArr);
     }
 
-    private renderPage(ejsData: string, dirName: string, inputFile: boolean, createDir: boolean = true): Promise<void> {
+    /**
+     *
+     * Render a page in folder `dirName` or in root directory of publish (index.html)
+     *
+     * @private
+     * @param {string} ejsData
+     * @param {string} dirName
+     * @param {boolean} inputFile
+     * @param {boolean} isIndexPage
+     * @param {boolean} [createDir=true]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
+    private renderPage(ejsData: string, dirName: string, inputFile: boolean, isIndexPage: boolean,
+                       createDir: boolean = true): Promise<void> {
         let mainContent: string;
 
         return fs.pathExists(dirName)
@@ -108,8 +157,12 @@ class EjsParser {
             else
                 mainContent = ejsData; // ejsData as EJS or HTML string
         })
-        .then(() => this.renderFile(this.layoutPath,
-            { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
+        .then(() => this.renderFile(this.layoutPath, {
+                site: this.siteConfig,
+                theme: this.themeConfig,
+                contents: mainContent,
+                isIndex: isIndexPage,
+            }))
         .then((htmlStr: string) => fs.writeFile(path.join(dirName, Constants.DEFAULT_HTML_NAME), htmlStr));
     }
 
@@ -126,9 +179,11 @@ class EjsParser {
     private renderFile(filePath: string, data: ejs.Data): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             ejs.renderFile(filePath, data, (renderError: Error, htmlStr: string) => {
-                if (renderError) reject(renderError);
-
-                resolve(htmlStr);
+                if (renderError) {
+                    reject(renderError);
+                } else {
+                    resolve(htmlStr);
+                }
             });
         });
     }

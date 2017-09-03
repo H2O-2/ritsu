@@ -9,20 +9,34 @@ const marked = require("marked");
 const path = require("path");
 const constants_1 = require("./constants");
 class EjsParser {
-    constructor(ejsRoot, postRoot, generatePath, siteConfig, themeConfig) {
-        this.ejsRoot = ejsRoot;
+    constructor(rootPath, postRoot, generatePath, themePath, siteConfig, themeConfig) {
+        this.rootPath = rootPath;
         this.postRoot = postRoot;
         this.generatePath = generatePath;
+        this.themePath = themePath;
+        this.ejsRoot = path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR);
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, constants_1.default.EJS_LAYOUT);
+        // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
+        marked.setOptions({
+            langPrefix: 'hljs ',
+            highlight(code) {
+                return hljs.highlightAuto(code).value;
+            },
+        });
     }
     render(fileArr) {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
             .then(() => this.renderPost(fileArr))
             .then(() => this.renderHeader())
-            .then(() => this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true))
-            .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true));
+            .then(() => this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true, true))
+            .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true, false))
+            .catch((e) => { throw e; });
+    }
+    test(fileArr) {
+        fs.mkdirSync(path.join(this.generatePath, this.siteConfig.postDir));
+        return this.renderPost(fileArr).catch((e) => { throw e; });
     }
     renderHeader() {
         // reference:
@@ -36,35 +50,63 @@ class EjsParser {
                 const headLink = path.join(this.generatePath, headers[headName]);
                 headerPromiseArr.push(fs.pathExists(headLink)
                     .then((exists) => {
-                    if (exists || isAbsolute.test(headers[headName]))
-                        return;
-                    return this.renderPage(`${headName.toLowerCase()}.ejs`, headLink, true);
+                    if (!exists && !isAbsolute.test(headers[headName])) {
+                        return this.renderPage(path.join(this.themePath, constants_1.default.CUSTOM_HEADER_DIR, `${headName.toLowerCase()}.ejs`), headLink, true, false);
+                    }
                 }));
             }
         }
         return Promise.all(headerPromiseArr);
     }
-    renderPost(fileArr) {
-        // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
-        marked.setOptions({
-            langPrefix: 'hljs ',
-            highlight(code) {
-                return hljs.highlightAuto(code).value;
-            },
+    renderPost(fileArr, fileIndex = 0) {
+        const fileName = fileArr[fileIndex];
+        return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
+            .then((fileStr) => {
+            return marked(fileStr);
+        })
+            .then((mainContent) => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
+            .then((postHtml) => {
+            const urlRegex = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+            return this.renderPage(postHtml, path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')), false, false);
+        })
+            .then(() => {
+            if (fileIndex < fileArr.length - 1) {
+                return this.renderPost(fileArr, fileIndex + 1);
+            }
         });
-        const renderPromiseArr = [];
-        let mainContent;
-        for (const fileName of fileArr) {
-            renderPromiseArr.push(fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
-                .then((fileStr) => {
-                mainContent = marked(fileStr);
-            })
-                .then(() => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
-                .then((postHtml) => this.renderPage(postHtml, path.join(this.generatePath, this.siteConfig.postDir, Date.now().toString()), false)));
-        }
-        return Promise.all(renderPromiseArr);
     }
-    renderPage(ejsData, dirName, inputFile, createDir = true) {
+    // private renderPost(fileArr: string[]): Promise<void[]> {
+    //     // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
+    //     marked.setOptions({
+    //         langPrefix: 'hljs ',
+    //         highlight(code) {
+    //             return hljs.highlightAuto(code).value;
+    //         },
+    //     });
+    //     const renderPromiseArr: Array<Promise<void>> = [];
+    //     let mainContent: string;
+    //     for (const fileName of fileArr) {
+    //         renderPromiseArr.push(
+    //             fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
+    //             .then((fileStr: string) => {
+    //                 mainContent = marked(fileStr);
+    //             })
+    //             .then(() => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
+    //                 { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
+    //             .then((postHtml: string) => {
+    //                 const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+    //                 this.renderPage(postHtml,
+    //                     path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')),
+    //                                 false, false);
+    //             })
+    //             .catch((e: Error) => {
+    //                 console.log('catch');
+    //             }),
+    //         );
+    //     }
+    //     return Promise.all(renderPromiseArr);
+    // }
+    renderPage(ejsData, dirName, inputFile, isIndexPage, createDir = true) {
         let mainContent;
         return fs.pathExists(dirName)
             .then((exists) => {
@@ -80,7 +122,12 @@ class EjsParser {
             else
                 mainContent = ejsData; // ejsData as EJS or HTML string
         })
-            .then(() => this.renderFile(this.layoutPath, { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
+            .then(() => this.renderFile(this.layoutPath, {
+            site: this.siteConfig,
+            theme: this.themeConfig,
+            contents: mainContent,
+            isIndex: isIndexPage,
+        }))
             .then((htmlStr) => fs.writeFile(path.join(dirName, constants_1.default.DEFAULT_HTML_NAME), htmlStr));
     }
     /**
@@ -96,9 +143,12 @@ class EjsParser {
     renderFile(filePath, data) {
         return new Promise((resolve, reject) => {
             ejs.renderFile(filePath, data, (renderError, htmlStr) => {
-                if (renderError)
+                if (renderError) {
                     reject(renderError);
-                resolve(htmlStr);
+                }
+                else {
+                    resolve(htmlStr);
+                }
             });
         });
     }

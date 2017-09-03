@@ -7,6 +7,7 @@ export default class Constants {
     public static readonly DEFAULT_TEMPLATE: string = 'default';
     public static readonly DEFAULT_DIR_NAME: string = 'new-blog';
     public static readonly DEFAULT_GENERATE_DIR: string = 'publish';
+    public static readonly CUSTOM_HEADER_DIR: string = 'custom';
     public static readonly GIT_REPO_THEME_NOTES: string = 'https://github.com/H2O-2/theme-notes.git';
     public static readonly DEFAULT_HTML_NAME: string = 'index.html';
 

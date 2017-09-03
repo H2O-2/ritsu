@@ -289,10 +289,10 @@ export default class Engine {
                 ` another directory name.`, dirName);
         })
         .then(() => Log.logInfo('Generating...'))
-        .then(() => ejsParser = new EjsParser(path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR),
-                                            this.postPath, generatePath, this.customSiteConfig, this.customThemeConfig))
-        .then(() => fs.mkdir(generatePath))
+        .then(() => ejsParser = new EjsParser(this.rootPath, this.postPath, generatePath, this.themePath,
+                                                this.customSiteConfig, this.customThemeConfig))
         .then(() => {
+            fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
         .then(() => {
@@ -305,6 +305,7 @@ export default class Engine {
             return fileArr;
         })
         .then((fileArr: string[]) => ejsParser.render(fileArr))
+        // .then((fileArr: string[]) => ejsParser.test(fileArr))
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
@@ -397,9 +398,8 @@ export default class Engine {
      * @returns {Promise<any>}
      * @memberof Engine
      */
-    private findDb(curPath: string): Promise<any> {
+    private findDb(curPath: string): Promise<SiteDb|void> {
         const dbPath = path.join(curPath, Constants.DB_FILE);
-
         return fs.pathExists(dbPath)
         .then((exists: boolean) => {
             if (exists) {
@@ -409,7 +409,7 @@ export default class Engine {
             } else {
                 const parent = path.dirname(curPath);
 
-                if (parent === curPath) return {};
+                if (parent === curPath) return;
 
                 return this.findDb(parent);
             }
