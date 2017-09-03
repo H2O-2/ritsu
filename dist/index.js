@@ -31,4 +31,8 @@ program.command('generate [dirName]').alias('g').description('Generate Site').ac
     const engine = new engine_1.default();
     engine.generate(dirName);
 });
+program.command('purge <dirName>').description('Purge generated blog').action((dirName) => {
+    const engine = new engine_1.default();
+    engine.purge(dirName);
+});
 program.version(VER).description(DESCRIPTION).parse(process.argv);

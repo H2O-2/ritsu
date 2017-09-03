@@ -67,6 +67,14 @@ export default class Engine {
     generate(dirName: string): void;
     /**
      *
+     * Delete the blog generated.
+     *
+     * @param {string} dirName
+     * @memberof Engine
+     */
+    purge(dirName: string): void;
+    /**
+     *
      * Check if postName already exists in .db.json
      *
      * @private

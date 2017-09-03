@@ -29,7 +29,7 @@ program.command('delete <post>').alias('d').description('Delete the post').actio
     const engine = new Engine();
 
     engine.delete(post);
-})
+});
 
 program.command('publish <post> [date]').alias('p').description('Publish the post')
         .action((post: string, date: string) => {
@@ -42,6 +42,12 @@ program.command('generate [dirName]').alias('g').description('Generate Site').ac
     const engine = new Engine();
 
     engine.generate(dirName);
+});
+
+program.command('purge <dirName>').description('Purge generated blog').action((dirName: string) => {
+    const engine = new Engine();
+
+    engine.purge(dirName);
 });
 
 program.version(VER).description(DESCRIPTION).parse(process.argv);
