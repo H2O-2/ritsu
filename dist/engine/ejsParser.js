@@ -8,6 +8,7 @@ const hljs = require("highlight.js");
 const marked = require("marked");
 const path = require("path");
 const constants_1 = require("./constants");
+const frontMatter_1 = require("./frontMatter");
 class EjsParser {
     constructor(rootPath, postRoot, generatePath, themePath, siteConfig, themeConfig) {
         this.rootPath = rootPath;
@@ -26,6 +27,14 @@ class EjsParser {
             },
         });
     }
+    /**
+     *
+     * Render all EJS files.
+     *
+     * @param {string[]} fileArr
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     render(fileArr) {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
             .then(() => this.renderPost(fileArr))
@@ -34,10 +43,14 @@ class EjsParser {
             .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true, false))
             .catch((e) => { throw e; });
     }
-    test(fileArr) {
-        fs.mkdirSync(path.join(this.generatePath, this.siteConfig.postDir));
-        return this.renderPost(fileArr).catch((e) => { throw e; });
-    }
+    /**
+     *
+     * Render all pages that header links directs to.
+     *
+     * @private
+     * @returns {Promise<void[]>}
+     * @memberof EjsParser
+     */
     renderHeader() {
         // reference:
         // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
@@ -58,10 +71,21 @@ class EjsParser {
         }
         return Promise.all(headerPromiseArr);
     }
+    /**
+     *
+     * Render all post pages.
+     *
+     * @private
+     * @param {string[]} fileArr
+     * @param {number} [fileIndex=0]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     renderPost(fileArr, fileIndex = 0) {
         const fileName = fileArr[fileIndex];
         return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
             .then((fileStr) => {
+            fileStr = fileStr.replace(frontMatter_1.default.splitRegex, '');
             return marked(fileStr);
         })
             .then((mainContent) => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
@@ -75,37 +99,19 @@ class EjsParser {
             }
         });
     }
-    // private renderPost(fileArr: string[]): Promise<void[]> {
-    //     // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
-    //     marked.setOptions({
-    //         langPrefix: 'hljs ',
-    //         highlight(code) {
-    //             return hljs.highlightAuto(code).value;
-    //         },
-    //     });
-    //     const renderPromiseArr: Array<Promise<void>> = [];
-    //     let mainContent: string;
-    //     for (const fileName of fileArr) {
-    //         renderPromiseArr.push(
-    //             fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
-    //             .then((fileStr: string) => {
-    //                 mainContent = marked(fileStr);
-    //             })
-    //             .then(() => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
-    //                 { site: this.siteConfig, theme: this.themeConfig, contents: mainContent }))
-    //             .then((postHtml: string) => {
-    //                 const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
-    //                 this.renderPage(postHtml,
-    //                     path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')),
-    //                                 false, false);
-    //             })
-    //             .catch((e: Error) => {
-    //                 console.log('catch');
-    //             }),
-    //         );
-    //     }
-    //     return Promise.all(renderPromiseArr);
-    // }
+    /**
+     *
+     * Render a page in folder `dirName` or in root directory of publish (index.html)
+     *
+     * @private
+     * @param {string} ejsData
+     * @param {string} dirName
+     * @param {boolean} inputFile
+     * @param {boolean} isIndexPage
+     * @param {boolean} [createDir=true]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     renderPage(ejsData, dirName, inputFile, isIndexPage, createDir = true) {
         let mainContent;
         return fs.pathExists(dirName)

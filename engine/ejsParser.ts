@@ -8,6 +8,7 @@ import * as marked from 'marked';
 import * as path from 'path';
 
 import Constants from './constants';
+import FrontMatter from './frontMatter';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
@@ -109,6 +110,8 @@ class EjsParser {
 
         return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
         .then((fileStr: string) => {
+            fileStr = fileStr.replace(FrontMatter.splitRegex, '');
+
             return marked(fileStr);
         })
         .then((mainContent: string) => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),

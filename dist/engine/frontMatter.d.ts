@@ -9,6 +9,7 @@ export interface FrontMatterObj {
  * @class FrontMatter
  */
 export default class FrontMatter {
+    static readonly splitRegex: RegExp;
     /**
      *
      * Parse the front matter of a specific post.
@@ -19,5 +20,4 @@ export default class FrontMatter {
      * @memberof FrontMatter
      */
     static parsePost(postPath: string): Promise<FrontMatterObj>;
-    private static readonly splitRegex;
 }

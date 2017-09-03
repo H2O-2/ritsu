@@ -14,6 +14,8 @@ export interface FrontMatterObj {
  * @class FrontMatter
  */
 export default class FrontMatter {
+    public static readonly splitRegex: RegExp = /^\n*-{3,}\n([\s\S]+\n)+-{3,}\n/;
+
     /**
      *
      * Parse the front matter of a specific post.
@@ -35,5 +37,4 @@ export default class FrontMatter {
         });
     }
 
-    private static readonly splitRegex: RegExp = /^\n*-{3,}\n([\s\S]+\n)+-{3,}\n/;
 }
