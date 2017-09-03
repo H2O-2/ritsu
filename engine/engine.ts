@@ -14,14 +14,9 @@ import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
 import FrontMatter from './frontMatter';
 import Log from './log';
+import Post from './post';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
-
-interface Post {
-    fileName: string;
-    title: string;
-    date: number; // Unix Timestamp (miliseconds)
-}
 
 interface SiteDb {
     rootPath: string;
@@ -85,6 +80,7 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Initializing...'))
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
+        .then(() => fs.copySync(this.defaultSiteConfigPath, path.join(this.rootPath, Constants.DEFAULT_SITE_CONFIG)))
         .then(() => fs.copySync(this.defaultThemeConfigPath, path.join(this.rootPath, Constants.DEFAULT_THEME_CONFIG)))
         .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')))
         .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')))
@@ -96,10 +92,7 @@ export default class Engine {
                 postData: [],
             })
         .then(() => fs.writeJSON(path.join(this.rootPath, Constants.DB_FILE), dbData))
-        .then(() => {
-            // change working directory
-            process.chdir(this.rootPath);
-        })
+        .then(() => process.chdir(this.rootPath))
         .then(() => this.newPost('ritsu', false))
         .then(() => this.publish('ritsu', undefined, false))
         .then(() => Log.logInfo('Fetching theme...'))
@@ -234,11 +227,13 @@ export default class Engine {
         const postFile: string = `${postName}.md`;
 
         let draftPath: string;
+        let postPath: string;
 
         this.readDb()
         .then(() => this.updateConfig())
         .then(() => {
             draftPath = path.join(this.draftPath, postFile);
+            postPath = path.join(this.postPath, postFile);
 
             if (!fs.pathExistsSync(draftPath)) {
                 throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
@@ -249,10 +244,22 @@ export default class Engine {
                 Log.logInfo('Processing...');
         })
         .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
-        .then(() => FrontMatter.parsePost(path.join(this.postPath, postFile)))
+        .then(() => FrontMatter.parseFrontMatter(postPath))
         .then((frontMatter) => {
-            this.curDb.postData.push({ fileName: postName, title: frontMatter.title, date: Date.now() });
+            const newPost: Post = {
+                fileName: postName,
+                title: frontMatter.title,
+                date: Date.now(),
+                description: frontMatter.description ? frontMatter.description :
+                                                       this.findDescription(FrontMatter.parsePostStr(postPath)),
+            };
+
+            // Reference of this neat way of pushing the element to the front of array:
+            // https://stackoverflow.com/a/39531492/7837815
+            this.curDb.postData = [newPost, ...this.curDb.postData];
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
+
+            console.log(newPost.description);
         })
         .then(() => {
             if (outputInfo)
@@ -290,7 +297,7 @@ export default class Engine {
         })
         .then(() => Log.logInfo('Generating...'))
         .then(() => ejsParser = new EjsParser(this.rootPath, this.postPath, generatePath, this.themePath,
-                                                this.customSiteConfig, this.customThemeConfig))
+                                                this.curDb.postData, this.customSiteConfig, this.customThemeConfig))
         .then(() => {
             fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
@@ -461,5 +468,14 @@ export default class Engine {
             }
         })
         .catch((e: Error) => Log.logErr(e.message));
+    }
+
+    private findDescription(postStr: string): string {
+        const splitDescription: RegExp = /^[\n]*(.*?)[\n]*<!-- description -->/;
+
+        splitDescription.lastIndex = 0;
+        const regexArr: RegExpExecArray|null = splitDescription.exec(postStr);
+
+        return regexArr === null ? '\n' : regexArr[1];
     }
 }

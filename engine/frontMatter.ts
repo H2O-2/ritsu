@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 export interface FrontMatterObj {
     title: string;
     tags: string[];
+    description?: string;
 }
 
 /**
@@ -25,7 +26,7 @@ export default class FrontMatter {
      * @returns {FrontMatterObj}
      * @memberof FrontMatter
      */
-    public static parsePost(postPath: string): Promise<FrontMatterObj> {
+    public static parseFrontMatter(postPath: string): Promise<FrontMatterObj> {
         return fs.readFile(postPath, 'utf8')
         .then((postStr: string) => {
             const frontMatterStr: RegExpMatchArray|null = postStr.match(this.splitRegex);
@@ -37,4 +38,12 @@ export default class FrontMatter {
         });
     }
 
+    public static parsePost(postPath: string): Promise<string> {
+        return fs.readFile(postPath, 'utf8')
+        .then((postStr: string) => postStr.replace(this.splitRegex, ''));
+    }
+
+    public static parsePostStr(postPath: string): string {
+        return fs.readFileSync(postPath, 'utf8').replace(this.splitRegex, '');
+    }
 }

@@ -9,6 +9,7 @@ import * as path from 'path';
 
 import Constants from './constants';
 import FrontMatter from './frontMatter';
+import Post from './post';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
@@ -18,17 +19,19 @@ class EjsParser {
     private postRoot: string;
     private generatePath: string;
     private themePath: string;
+    private postArr: Post[];
     private siteConfig: SiteConfig;
     private themeConfig: ThemeConfig;
     private layoutPath: string;
 
-    constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string,
+    constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string, postArr: Post[],
                 siteConfig: SiteConfig, themeConfig: ThemeConfig) {
         this.rootPath = rootPath;
         this.postRoot = postRoot;
         this.generatePath = generatePath;
         this.themePath = themePath;
         this.ejsRoot = path.join(this.themePath, Constants.DEFAULT_THEME, Constants.EJS_DIR);
+        this.postArr = postArr;
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, Constants.EJS_LAYOUT);
@@ -54,7 +57,7 @@ class EjsParser {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
         .then(() => this.renderPost(fileArr))
         .then(() => this.renderHeader())
-        .then(() => this.renderPage(Constants.EJS_INDEX, this.generatePath, true, true))
+        .then(() => this.pagination(this.postArr))
         .then(() => this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir),
                     true, false))
         .catch((e: Error) => { throw e; });
@@ -108,12 +111,8 @@ class EjsParser {
     private renderPost(fileArr: string[], fileIndex: number = 0): Promise<void> {
         const fileName: string = fileArr[fileIndex];
 
-        return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
-        .then((fileStr: string) => {
-            fileStr = fileStr.replace(FrontMatter.splitRegex, '');
-
-            return marked(fileStr);
-        })
+        return FrontMatter.parsePost(path.join(this.postRoot, `${fileName}.md`))
+        .then((fileStr: string) => marked(fileStr))
         .then((mainContent: string) => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
             { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
         .then((postHtml: string) => {
@@ -128,6 +127,13 @@ class EjsParser {
                 return this.renderPost(fileArr, fileIndex + 1);
             }
         });
+    }
+
+    private pagination(postArr: Post[]): Promise<void> {
+        const posts: Post[] = postArr;
+
+        return this.renderPage(Constants.EJS_INDEX, this.generatePath, true, true)
+        .then(() => fs.mkdir(this.siteConfig.pageDir));
     }
 
     /**

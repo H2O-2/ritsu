@@ -19,7 +19,7 @@ class FrontMatter {
      * @returns {FrontMatterObj}
      * @memberof FrontMatter
      */
-    static parsePost(postPath) {
+    static parseFrontMatter(postPath) {
         return fs.readFile(postPath, 'utf8')
             .then((postStr) => {
             const frontMatterStr = postStr.match(this.splitRegex);
@@ -27,6 +27,13 @@ class FrontMatter {
                 throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
             return yaml.safeLoad(frontMatterStr[1]);
         });
+    }
+    static parsePost(postPath) {
+        return fs.readFile(postPath, 'utf8')
+            .then((postStr) => postStr.replace(this.splitRegex, ''));
+    }
+    static parsePostStr(postPath) {
+        return fs.readFileSync(postPath, 'utf8').replace(this.splitRegex, '');
     }
 }
 FrontMatter.splitRegex = /^\n*-{3,}\n([\s\S]+\n)+-{3,}\n/;

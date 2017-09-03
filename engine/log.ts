@@ -8,7 +8,7 @@ export default class Log {
      * @param {string} msg
      * @memberof Log
      */
-    public static logErr(msg: string): void {
+    public static logErr(msg: string|void): void {
         Log.log(chalk.bgRed.black('ERROR:'), msg);
     }
 

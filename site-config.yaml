@@ -26,6 +26,7 @@ og: !!map
 theme: 'theme-notes' # theme to use for your site
 rootURL: 'http://blog.h2o2.com/' # the root URL of your blog, i.e. URL without subdirectories
 rootDir: '/' # this is the root directory of your blog. E.g. if the blog URL is blog.name.com, then the value should be '/'
+pageDir: 'page/' #directory for pagination
 archiveDir: 'archive/' # directory for archive page
 postDir: 'post/' # directory for your posts
 preprocess: true # Using css preprocessors (sass/scss) or not, default to true

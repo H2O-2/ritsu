@@ -14,6 +14,7 @@ export default interface SiteConfig {
     personalPage?: string;
     theme: string;
     rootDir: string;
+    pageDir: string;
     archiveDir: string;
     postDir: string;
     templateDir: string;

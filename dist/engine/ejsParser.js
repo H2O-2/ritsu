@@ -10,12 +10,13 @@ const path = require("path");
 const constants_1 = require("./constants");
 const frontMatter_1 = require("./frontMatter");
 class EjsParser {
-    constructor(rootPath, postRoot, generatePath, themePath, siteConfig, themeConfig) {
+    constructor(rootPath, postRoot, generatePath, themePath, postArr, siteConfig, themeConfig) {
         this.rootPath = rootPath;
         this.postRoot = postRoot;
         this.generatePath = generatePath;
         this.themePath = themePath;
         this.ejsRoot = path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.EJS_DIR);
+        this.postArr = postArr;
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, constants_1.default.EJS_LAYOUT);
@@ -39,7 +40,7 @@ class EjsParser {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
             .then(() => this.renderPost(fileArr))
             .then(() => this.renderHeader())
-            .then(() => this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true, true))
+            .then(() => this.pagination(this.postArr))
             .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true, false))
             .catch((e) => { throw e; });
     }
@@ -83,11 +84,8 @@ class EjsParser {
      */
     renderPost(fileArr, fileIndex = 0) {
         const fileName = fileArr[fileIndex];
-        return fs.readFile(path.join(this.postRoot, `${fileName}.md`), 'utf8')
-            .then((fileStr) => {
-            fileStr = fileStr.replace(frontMatter_1.default.splitRegex, '');
-            return marked(fileStr);
-        })
+        return frontMatter_1.default.parsePost(path.join(this.postRoot, `${fileName}.md`))
+            .then((fileStr) => marked(fileStr))
             .then((mainContent) => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
             .then((postHtml) => {
             const urlRegex = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
@@ -98,6 +96,11 @@ class EjsParser {
                 return this.renderPost(fileArr, fileIndex + 1);
             }
         });
+    }
+    pagination(postArr) {
+        const posts = postArr;
+        return this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true, true)
+            .then(() => fs.mkdir(this.siteConfig.pageDir));
     }
     /**
      *

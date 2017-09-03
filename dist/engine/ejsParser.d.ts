@@ -1,3 +1,4 @@
+import Post from './post';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 declare class EjsParser {
@@ -6,10 +7,11 @@ declare class EjsParser {
     private postRoot;
     private generatePath;
     private themePath;
+    private postArr;
     private siteConfig;
     private themeConfig;
     private layoutPath;
-    constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string, siteConfig: SiteConfig, themeConfig: ThemeConfig);
+    constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string, postArr: Post[], siteConfig: SiteConfig, themeConfig: ThemeConfig);
     /**
      *
      * Render all EJS files.
@@ -39,6 +41,7 @@ declare class EjsParser {
      * @memberof EjsParser
      */
     private renderPost(fileArr, fileIndex?);
+    private pagination(postArr);
     /**
      *
      * Render a page in folder `dirName` or in root directory of publish (index.html)

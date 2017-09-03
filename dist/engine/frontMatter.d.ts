@@ -1,6 +1,7 @@
 export interface FrontMatterObj {
     title: string;
     tags: string[];
+    description?: string;
 }
 /**
  *
@@ -19,5 +20,7 @@ export default class FrontMatter {
      * @returns {FrontMatterObj}
      * @memberof FrontMatter
      */
-    static parsePost(postPath: string): Promise<FrontMatterObj>;
+    static parseFrontMatter(postPath: string): Promise<FrontMatterObj>;
+    static parsePost(postPath: string): Promise<string>;
+    static parsePostStr(postPath: string): string;
 }

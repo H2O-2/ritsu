@@ -6,7 +6,7 @@ export default class Log {
      * @param {string} msg
      * @memberof Log
      */
-    static logErr(msg: string): void;
+    static logErr(msg: string | void): void;
     /**
      * Logs general informations.
      *

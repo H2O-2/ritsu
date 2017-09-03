@@ -48,6 +48,7 @@ class Engine {
         })
             .then(() => log_1.default.logInfo('Initializing...'))
             .then(() => fs.copySync(this.initFilePath, this.rootPath))
+            .then(() => fs.copySync(this.defaultSiteConfigPath, path.join(this.rootPath, constants_1.default.DEFAULT_SITE_CONFIG)))
             .then(() => fs.copySync(this.defaultThemeConfigPath, path.join(this.rootPath, constants_1.default.DEFAULT_THEME_CONFIG)))
             .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')))
             .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')))
@@ -58,10 +59,7 @@ class Engine {
             postData: [],
         })
             .then(() => fs.writeJSON(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
-            .then(() => {
-            // change working directory
-            process.chdir(this.rootPath);
-        })
+            .then(() => process.chdir(this.rootPath))
             .then(() => this.newPost('ritsu', false))
             .then(() => this.publish('ritsu', undefined, false))
             .then(() => log_1.default.logInfo('Fetching theme...'))
@@ -186,10 +184,12 @@ class Engine {
     publish(postName, date, outputInfo = true) {
         const postFile = `${postName}.md`;
         let draftPath;
+        let postPath;
         this.readDb()
             .then(() => this.updateConfig())
             .then(() => {
             draftPath = path.join(this.draftPath, postFile);
+            postPath = path.join(this.postPath, postFile);
             if (!fs.pathExistsSync(draftPath)) {
                 throw new Error(`Post ${chalk.blue(postName)} does not exist, check your post name.`);
             }
@@ -199,10 +199,20 @@ class Engine {
                 log_1.default.logInfo('Processing...');
         })
             .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
-            .then(() => frontMatter_1.default.parsePost(path.join(this.postPath, postFile)))
+            .then(() => frontMatter_1.default.parseFrontMatter(postPath))
             .then((frontMatter) => {
-            this.curDb.postData.push({ fileName: postName, title: frontMatter.title, date: Date.now() });
+            const newPost = {
+                fileName: postName,
+                title: frontMatter.title,
+                date: Date.now(),
+                description: frontMatter.description ? frontMatter.description :
+                    this.findDescription(frontMatter_1.default.parsePostStr(postPath)),
+            };
+            // Reference of this neat way of pushing the element to the front of array:
+            // https://stackoverflow.com/a/39531492/7837815
+            this.curDb.postData = [newPost, ...this.curDb.postData];
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
+            console.log(newPost.description);
         })
             .then(() => {
             if (outputInfo)
@@ -236,7 +246,7 @@ class Engine {
                     ` another directory name.`, dirName);
         })
             .then(() => log_1.default.logInfo('Generating...'))
-            .then(() => ejsParser = new ejsParser_1.default(this.rootPath, this.postPath, generatePath, this.themePath, this.customSiteConfig, this.customThemeConfig))
+            .then(() => ejsParser = new ejsParser_1.default(this.rootPath, this.postPath, generatePath, this.themePath, this.curDb.postData, this.customSiteConfig, this.customThemeConfig))
             .then(() => {
             fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, constants_1.default.RES_DIR));
@@ -394,6 +404,12 @@ class Engine {
             }
         })
             .catch((e) => log_1.default.logErr(e.message));
+    }
+    findDescription(postStr) {
+        const splitDescription = /^[\n]*(.*?)[\n]*<!-- description -->/;
+        splitDescription.lastIndex = 0;
+        const regexArr = splitDescription.exec(postStr);
+        return regexArr === null ? '\n' : regexArr[1];
     }
 }
 exports.default = Engine;

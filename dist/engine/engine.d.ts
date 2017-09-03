@@ -132,4 +132,5 @@ export default class Engine {
      * @memberof Engine
      */
     private abortGen(engineError, dirName);
+    private findDescription(postStr);
 }
