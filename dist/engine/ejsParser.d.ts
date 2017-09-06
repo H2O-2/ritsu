@@ -11,6 +11,7 @@ declare class EjsParser {
     private siteConfig;
     private themeConfig;
     private layoutPath;
+    private readonly defaultRenderData;
     constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string, postArr: Post[], siteConfig: SiteConfig, themeConfig: ThemeConfig);
     /**
      *
@@ -20,7 +21,7 @@ declare class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    render(fileArr: string[]): Promise<void>;
+    render(): Promise<void>;
     /**
      *
      * Render all pages that header links directs to.
@@ -40,8 +41,8 @@ declare class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    private renderPost(fileArr, fileIndex?);
-    private pagination(postArr);
+    private renderPost(fileIndex?);
+    private pagination(postArr, page, first?);
     /**
      *
      * Render a page in folder `dirName` or in root directory of publish (index.html)
@@ -55,7 +56,7 @@ declare class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    private renderPage(ejsData, dirName, inputFile, isIndexPage, createDir?);
+    private renderPage(ejsData, renderData, dirName, inputFile, isIndexPage, createDir?);
     /**
      *
      * A promisified version of ejs.renderFile().

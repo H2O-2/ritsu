@@ -10,6 +10,7 @@ Constants.DEFAULT_THEME = 'theme-notes';
 Constants.DEFAULT_TEMPLATE = 'default';
 Constants.DEFAULT_DIR_NAME = 'new-blog';
 Constants.DEFAULT_GENERATE_DIR = 'publish';
+Constants.DEFAULT_PAGE_DIR = 'page';
 Constants.CUSTOM_HEADER_DIR = 'custom';
 Constants.GIT_REPO_THEME_NOTES = 'https://github.com/H2O-2/theme-notes.git';
 Constants.DEFAULT_HTML_NAME = 'index.html';

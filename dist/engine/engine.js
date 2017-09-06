@@ -5,6 +5,7 @@ const commandExist = require("command-exists");
 const spawn = require("cross-spawn");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
+const moment = require("moment");
 const path = require("path");
 const process = require("process");
 const constants_1 = require("./constants");
@@ -60,7 +61,6 @@ class Engine {
         })
             .then(() => fs.writeJSON(path.join(this.rootPath, constants_1.default.DB_FILE), dbData))
             .then(() => process.chdir(this.rootPath))
-            .then(() => this.newPost('ritsu', false))
             .then(() => this.publish('ritsu', undefined, false))
             .then(() => log_1.default.logInfo('Fetching theme...'))
             .then(() => {
@@ -201,25 +201,34 @@ class Engine {
             .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
             .then(() => frontMatter_1.default.parseFrontMatter(postPath))
             .then((frontMatter) => {
+            const urlRegex = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+            const curTime = moment.now();
             const newPost = {
                 fileName: postName,
+                urlName: postName.replace(urlRegex, '-'),
                 title: frontMatter.title,
-                date: Date.now(),
+                date: curTime,
+                formatedDate: moment(curTime).format(this.customSiteConfig.timeFormat),
+                tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
                     this.findDescription(frontMatter_1.default.parsePostStr(postPath)),
+                pageUrl: this.customSiteConfig.postDir,
+                prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
+                nextPost: null,
             };
-            // Reference of this neat way of pushing the element to the front of array:
+            if (this.curDb.postData.length > 0)
+                this.curDb.postData[0].nextPost = newPost.fileName;
+            // Reference of this neat way of pushing the element to the front of an array:
             // https://stackoverflow.com/a/39531492/7837815
             this.curDb.postData = [newPost, ...this.curDb.postData];
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
-            console.log(newPost.description);
         })
             .then(() => {
             if (outputInfo)
                 log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                     `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-            .catch((e) => log_1.default.logErr(e.message));
+            .catch((e) => log_1.default.logErr(e.stack));
     }
     /**
      *
@@ -251,18 +260,11 @@ class Engine {
             fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, constants_1.default.RES_DIR));
         })
-            .then(() => {
-            const fileArr = [];
-            for (const post of this.curDb.postData) {
-                fileArr.push(post.fileName);
-            }
-            return fileArr;
-        })
-            .then((fileArr) => ejsParser.render(fileArr))
+            .then(() => ejsParser.render())
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {
-            log_1.default.logErr(e.message);
+            log_1.default.logErr(e.stack);
             this.abortGen(e, generatePath);
         });
     }
@@ -405,6 +407,15 @@ class Engine {
         })
             .catch((e) => log_1.default.logErr(e.message));
     }
+    /**
+     *
+     * Filter description of the post by inline comment <!-- description -->
+     *
+     * @private
+     * @param {string} postStr
+     * @returns {string}
+     * @memberof Engine
+     */
     findDescription(postStr) {
         const splitDescription = /^[\n]*(.*?)[\n]*<!-- description -->/;
         splitDescription.lastIndex = 0;

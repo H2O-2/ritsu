@@ -132,5 +132,14 @@ export default class Engine {
      * @memberof Engine
      */
     private abortGen(engineError, dirName);
+    /**
+     *
+     * Filter description of the post by inline comment <!-- description -->
+     *
+     * @private
+     * @param {string} postStr
+     * @returns {string}
+     * @memberof Engine
+     */
     private findDescription(postStr);
 }

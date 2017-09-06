@@ -6,19 +6,26 @@
 export default interface SiteConfig {
     // See site-config.yaml for details
     siteName: string;
+    siteSubtitle: string;
     siteDescription?: string;
     author: string;
+    authorDescription: string;
     siteIcon?: string;
     createTime: string;
     avatar?: string;
     personalPage?: string;
+    og: Map<string, string>;
+
     theme: string;
     rootDir: string;
     pageDir: string;
     archiveDir: string;
     postDir: string;
-    templateDir: string;
+    timeFormat: string;
+
     repoURL?: string;
     branch?: string;
     commitMsg?: string;
+
+    [data: string]: any;
 }

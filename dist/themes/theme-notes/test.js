@@ -11,7 +11,7 @@ fs.readFile('./theme-config.yaml', 'utf8')
     .then(() => fs.readFile('./site-config.yaml', 'utf8'))
     .then((siteContent) => siteConfig = yaml.safeLoad(siteContent))
     .then(() => {
-    ejs.renderFile('layout.ejs', { theme: themeConfig, site: siteConfig }, (err, data) => {
+    ejs.renderFile('view/layout.ejs', { theme: themeConfig, site: siteConfig, postNum: 10, isIndex: false }, (err, data) => {
         if (err)
             throw err;
         console.log(data);

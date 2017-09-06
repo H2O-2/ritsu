@@ -38,11 +38,29 @@ export default class FrontMatter {
         });
     }
 
+    /**
+     *
+     * Remove front matter and return the content of the post.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {Promise<string>}
+     * @memberof FrontMatter
+     */
     public static parsePost(postPath: string): Promise<string> {
         return fs.readFile(postPath, 'utf8')
         .then((postStr: string) => postStr.replace(this.splitRegex, ''));
     }
 
+    /**
+     *
+     * Same as parsePost() but returns string instead.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {string}
+     * @memberof FrontMatter
+     */
     public static parsePostStr(postPath: string): string {
         return fs.readFileSync(postPath, 'utf8').replace(this.splitRegex, '');
     }

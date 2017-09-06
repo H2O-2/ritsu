@@ -28,10 +28,28 @@ class FrontMatter {
             return yaml.safeLoad(frontMatterStr[1]);
         });
     }
+    /**
+     *
+     * Remove front matter and return the content of the post.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {Promise<string>}
+     * @memberof FrontMatter
+     */
     static parsePost(postPath) {
         return fs.readFile(postPath, 'utf8')
             .then((postStr) => postStr.replace(this.splitRegex, ''));
     }
+    /**
+     *
+     * Same as parsePost() but returns string instead.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {string}
+     * @memberof FrontMatter
+     */
     static parsePostStr(postPath) {
         return fs.readFileSync(postPath, 'utf8').replace(this.splitRegex, '');
     }

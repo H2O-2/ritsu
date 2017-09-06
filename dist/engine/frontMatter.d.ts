@@ -21,6 +21,24 @@ export default class FrontMatter {
      * @memberof FrontMatter
      */
     static parseFrontMatter(postPath: string): Promise<FrontMatterObj>;
+    /**
+     *
+     * Remove front matter and return the content of the post.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {Promise<string>}
+     * @memberof FrontMatter
+     */
     static parsePost(postPath: string): Promise<string>;
+    /**
+     *
+     * Same as parsePost() but returns string instead.
+     *
+     * @static
+     * @param {string} postPath
+     * @returns {string}
+     * @memberof FrontMatter
+     */
     static parsePostStr(postPath: string): string;
 }

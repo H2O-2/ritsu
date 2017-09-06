@@ -20,6 +20,10 @@ class EjsParser {
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, constants_1.default.EJS_LAYOUT);
+        this.defaultRenderData = {
+            site: this.siteConfig,
+            theme: this.themeConfig,
+        };
         // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
         marked.setOptions({
             langPrefix: 'hljs ',
@@ -36,12 +40,11 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    render(fileArr) {
+    render() {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
-            .then(() => this.renderPost(fileArr))
+            .then(() => this.renderPost())
             .then(() => this.renderHeader())
-            .then(() => this.pagination(this.postArr))
-            .then(() => this.renderPage(constants_1.default.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir), true, false))
+            .then(() => this.pagination(this.postArr, 1))
             .catch((e) => { throw e; });
     }
     /**
@@ -65,7 +68,9 @@ class EjsParser {
                 headerPromiseArr.push(fs.pathExists(headLink)
                     .then((exists) => {
                     if (!exists && !isAbsolute.test(headers[headName])) {
-                        return this.renderPage(path.join(this.themePath, constants_1.default.CUSTOM_HEADER_DIR, `${headName.toLowerCase()}.ejs`), headLink, true, false);
+                        const headerData = this.defaultRenderData;
+                        headerData.page = { title: headName };
+                        return this.renderPage(path.join(this.themePath, constants_1.default.CUSTOM_HEADER_DIR, `${headName.toLowerCase()}.ejs`), headerData, headLink, true, false);
                     }
                 }));
             }
@@ -82,25 +87,53 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    renderPost(fileArr, fileIndex = 0) {
-        const fileName = fileArr[fileIndex];
-        return frontMatter_1.default.parsePost(path.join(this.postRoot, `${fileName}.md`))
+    renderPost(fileIndex = 0) {
+        const curPost = this.postArr[fileIndex];
+        let postData;
+        return frontMatter_1.default.parsePost(path.join(this.postRoot, `${curPost.fileName}.md`))
             .then((fileStr) => marked(fileStr))
-            .then((mainContent) => this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
-            .then((postHtml) => {
-            const urlRegex = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
-            return this.renderPage(postHtml, path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')), false, false);
+            .then((mainContent) => {
+            postData = {
+                site: this.siteConfig,
+                theme: this.themeConfig,
+                contents: mainContent,
+                isIndex: false,
+                page: curPost,
+            };
+            return this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_POST), postData);
         })
+            .then((postHtml) => this.renderPage(postHtml, postData, path.join(this.generatePath, curPost.pageUrl, curPost.urlName), false, false))
             .then(() => {
-            if (fileIndex < fileArr.length - 1) {
-                return this.renderPost(fileArr, fileIndex + 1);
+            if (fileIndex < this.postArr.length - 1) {
+                return this.renderPost(fileIndex + 1);
             }
         });
     }
-    pagination(postArr) {
+    pagination(postArr, page, first = true) {
         const posts = postArr;
-        return this.renderPage(constants_1.default.EJS_INDEX, this.generatePath, true, true)
-            .then(() => fs.mkdir(this.siteConfig.pageDir));
+        const indexData = this.defaultRenderData;
+        const pagePosts = posts.splice(0, this.themeConfig.postPerPage);
+        const newPage = {
+            pageNum: page,
+            postArr: pagePosts,
+            lastPage: posts.length === 0,
+            pageUrl: constants_1.default.DEFAULT_PAGE_DIR,
+        };
+        indexData.page = newPage;
+        return this.renderFile(constants_1.default.EJS_INDEX, indexData)
+            .then((indexContent) => {
+            if (first)
+                this.renderPage(indexContent, indexData, this.generatePath, false, true);
+            else
+                this.renderPage(indexContent, indexData, path.join(this.generatePath, constants_1.default.DEFAULT_PAGE_DIR, page.toString()), false, false);
+        })
+            .then(() => {
+            if (posts.length > 0) {
+                if (first)
+                    fs.mkdirSync(this.siteConfig.pageDir);
+                this.pagination(posts, page + 1, false);
+            }
+        });
     }
     /**
      *
@@ -115,7 +148,7 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    renderPage(ejsData, dirName, inputFile, isIndexPage, createDir = true) {
+    renderPage(ejsData, renderData, dirName, inputFile, isIndexPage, createDir = true) {
         let mainContent;
         return fs.pathExists(dirName)
             .then((exists) => {
@@ -131,12 +164,13 @@ class EjsParser {
             else
                 mainContent = ejsData; // ejsData as EJS or HTML string
         })
-            .then(() => this.renderFile(this.layoutPath, {
-            site: this.siteConfig,
-            theme: this.themeConfig,
-            contents: mainContent,
-            isIndex: isIndexPage,
-        }))
+            .then(() => {
+            const customRender = renderData;
+            customRender.contents = mainContent;
+            customRender.isIndex = isIndexPage;
+            customRender.postNum = this.postArr.length;
+            return this.renderFile(this.layoutPath, customRender);
+        })
             .then((htmlStr) => fs.writeFile(path.join(dirName, constants_1.default.DEFAULT_HTML_NAME), htmlStr));
     }
     /**

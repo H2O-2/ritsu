@@ -93,7 +93,6 @@ export default class Engine {
             })
         .then(() => fs.writeJSON(path.join(this.rootPath, Constants.DB_FILE), dbData))
         .then(() => process.chdir(this.rootPath))
-        .then(() => this.newPost('ritsu', false))
         .then(() => this.publish('ritsu', undefined, false))
         .then(() => Log.logInfo('Fetching theme...'))
         .then(() => {
@@ -246,27 +245,34 @@ export default class Engine {
         .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
         .then(() => FrontMatter.parseFrontMatter(postPath))
         .then((frontMatter) => {
+            const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+            const curTime: number = moment.now();
             const newPost: Post = {
                 fileName: postName,
+                urlName: postName.replace(urlRegex, '-'),
                 title: frontMatter.title,
-                date: Date.now(),
+                date: curTime,
+                formatedDate: moment(curTime).format(this.customSiteConfig.timeFormat),
+                tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
                                                        this.findDescription(FrontMatter.parsePostStr(postPath)),
+                pageUrl: this.customSiteConfig.postDir,
+                prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
+                nextPost: null,
             };
 
-            // Reference of this neat way of pushing the element to the front of array:
+            if (this.curDb.postData.length > 0) this.curDb.postData[0].nextPost = newPost.fileName;
+            // Reference of this neat way of pushing the element to the front of an array:
             // https://stackoverflow.com/a/39531492/7837815
             this.curDb.postData = [newPost, ...this.curDb.postData];
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
-
-            console.log(newPost.description);
         })
         .then(() => {
             if (outputInfo)
                 Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                             `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-        .catch((e: Error) => Log.logErr(e.message));
+        .catch((e: Error) => Log.logErr(e.stack));
     }
 
     /**
@@ -302,20 +308,11 @@ export default class Engine {
             fs.mkdirSync(generatePath);
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
-        .then(() => {
-            const fileArr: string[] = [];
-
-            for (const post of this.curDb.postData) {
-                fileArr.push(post.fileName);
-            }
-
-            return fileArr;
-        })
-        .then((fileArr: string[]) => ejsParser.render(fileArr))
+        .then(() => ejsParser.render())
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
-            Log.logErr(e.message);
+            Log.logErr(e.stack);
             this.abortGen(e, generatePath);
         });
     }
@@ -470,6 +467,15 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    /**
+     *
+     * Filter description of the post by inline comment <!-- description -->
+     *
+     * @private
+     * @param {string} postStr
+     * @returns {string}
+     * @memberof Engine
+     */
     private findDescription(postStr: string): string {
         const splitDescription: RegExp = /^[\n]*(.*?)[\n]*<!-- description -->/;
 

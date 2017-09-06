@@ -9,6 +9,7 @@ import * as path from 'path';
 
 import Constants from './constants';
 import FrontMatter from './frontMatter';
+import Page from './page';
 import Post from './post';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
@@ -23,6 +24,7 @@ class EjsParser {
     private siteConfig: SiteConfig;
     private themeConfig: ThemeConfig;
     private layoutPath: string;
+    private readonly defaultRenderData: ejs.Data;
 
     constructor(rootPath: string, postRoot: string, generatePath: string, themePath: string, postArr: Post[],
                 siteConfig: SiteConfig, themeConfig: ThemeConfig) {
@@ -35,6 +37,11 @@ class EjsParser {
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
         this.layoutPath = path.join(this.ejsRoot, Constants.EJS_LAYOUT);
+
+        this.defaultRenderData = {
+            site: this.siteConfig,
+            theme: this.themeConfig,
+        };
 
         // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
         marked.setOptions({
@@ -53,13 +60,13 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    public render(fileArr: string[]): Promise<void> {
+    public render(): Promise<void> {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
-        .then(() => this.renderPost(fileArr))
+        .then(() => this.renderPost())
         .then(() => this.renderHeader())
-        .then(() => this.pagination(this.postArr))
-        .then(() => this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir),
-                    true, false))
+        .then(() => this.pagination(this.postArr, 1))
+        // .then(() => this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir),
+        //             true, false))
         .catch((e: Error) => { throw e; });
     }
 
@@ -87,8 +94,12 @@ class EjsParser {
                     fs.pathExists(headLink)
                     .then((exists) => {
                         if (!exists && !isAbsolute.test(headers[headName])) {
+                            const headerData = this.defaultRenderData;
+                            headerData.page = { title: headName };
+
                             return this.renderPage(path.join(this.themePath, Constants.CUSTOM_HEADER_DIR,
-                                                    `${headName.toLowerCase()}.ejs`), headLink, true, false);
+                                                    `${headName.toLowerCase()}.ejs`), headerData, headLink,
+                                                    true, false);
                         }
                     }),
                 );
@@ -108,32 +119,61 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    private renderPost(fileArr: string[], fileIndex: number = 0): Promise<void> {
-        const fileName: string = fileArr[fileIndex];
+    private renderPost(fileIndex: number = 0): Promise<void> {
+        const curPost: Post = this.postArr[fileIndex];
+        let postData: ejs.Data;
 
-        return FrontMatter.parsePost(path.join(this.postRoot, `${fileName}.md`))
+        return FrontMatter.parsePost(path.join(this.postRoot, `${curPost.fileName}.md`))
         .then((fileStr: string) => marked(fileStr))
-        .then((mainContent: string) => this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST),
-            { site: this.siteConfig, theme: this.themeConfig, contents: mainContent, isIndex: false }))
-        .then((postHtml: string) => {
-            const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
+        .then((mainContent: string) => {
+            postData = {
+                site: this.siteConfig,
+                theme: this.themeConfig,
+                contents: mainContent,
+                isIndex: false,
+                page: curPost,
+            };
 
-            return this.renderPage(postHtml,
-                path.join(this.generatePath, this.siteConfig.postDir, fileName.replace(urlRegex, '-')),
-                            false, false);
+            return this.renderFile(path.join(this.ejsRoot, Constants.EJS_POST), postData);
         })
+        .then((postHtml: string) =>
+            this.renderPage(postHtml, postData,
+                            path.join(this.generatePath, curPost.pageUrl, curPost.urlName), false, false))
         .then(() => {
-            if (fileIndex < fileArr.length - 1) {
-                return this.renderPost(fileArr, fileIndex + 1);
+            if (fileIndex < this.postArr.length - 1) {
+                return this.renderPost(fileIndex + 1);
             }
         });
     }
 
-    private pagination(postArr: Post[]): Promise<void> {
+    private pagination(postArr: Post[], page: number, first: boolean = true): Promise<void> {
         const posts: Post[] = postArr;
+        const indexData: ejs.Data = this.defaultRenderData;
+        const pagePosts: Post[] = posts.splice(0, this.themeConfig.postPerPage);
+        const newPage: Page = {
+            pageNum: page,
+            postArr: pagePosts,
+            lastPage: posts.length === 0,
+            pageUrl: Constants.DEFAULT_PAGE_DIR,
+        };
 
-        return this.renderPage(Constants.EJS_INDEX, this.generatePath, true, true)
-        .then(() => fs.mkdir(this.siteConfig.pageDir));
+        indexData.page = newPage;
+
+        return this.renderFile(Constants.EJS_INDEX, indexData)
+        .then((indexContent: string) => {
+            if (first)
+                this.renderPage(indexContent, indexData, this.generatePath, false, true);
+            else
+                this.renderPage(indexContent, indexData,
+                    path.join(this.generatePath, Constants.DEFAULT_PAGE_DIR, page.toString()), false, false);
+        })
+        .then(() => {
+            if (posts.length > 0) {
+                if (first) fs.mkdirSync(this.siteConfig.pageDir);
+
+                this.pagination(posts, page + 1, false);
+            }
+        });
     }
 
     /**
@@ -149,7 +189,7 @@ class EjsParser {
      * @returns {Promise<void>}
      * @memberof EjsParser
      */
-    private renderPage(ejsData: string, dirName: string, inputFile: boolean, isIndexPage: boolean,
+    private renderPage(ejsData: string, renderData: ejs.Data, dirName: string, inputFile: boolean, isIndexPage: boolean,
                        createDir: boolean = true): Promise<void> {
         let mainContent: string;
 
@@ -166,12 +206,15 @@ class EjsParser {
             else
                 mainContent = ejsData; // ejsData as EJS or HTML string
         })
-        .then(() => this.renderFile(this.layoutPath, {
-                site: this.siteConfig,
-                theme: this.themeConfig,
-                contents: mainContent,
-                isIndex: isIndexPage,
-            }))
+        .then(() => {
+            const customRender: ejs.Data = renderData;
+
+            customRender.contents = mainContent;
+            customRender.isIndex = isIndexPage;
+            customRender.postNum = this.postArr.length;
+
+            return this.renderFile(this.layoutPath, customRender);
+        })
         .then((htmlStr: string) => fs.writeFile(path.join(dirName, Constants.DEFAULT_HTML_NAME), htmlStr));
     }
 
