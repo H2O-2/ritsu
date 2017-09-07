@@ -45,5 +45,5 @@ Thumbs.db
 bower_components/
 node_modules/
 
-test/
 new-blog/
+test.*

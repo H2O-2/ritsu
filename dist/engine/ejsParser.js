@@ -117,23 +117,25 @@ class EjsParser {
             pageNum: page,
             postArr: pagePosts,
             lastPage: posts.length === 0,
-            pageUrl: constants_1.default.DEFAULT_PAGE_DIR,
+            pageUrl: this.siteConfig.pageDir,
         };
         indexData.page = newPage;
         return this.renderFile(constants_1.default.EJS_INDEX, indexData)
             .then((indexContent) => {
             if (first)
                 this.renderPage(indexContent, indexData, this.generatePath, false, true);
-            else
-                this.renderPage(indexContent, indexData, path.join(this.generatePath, constants_1.default.DEFAULT_PAGE_DIR, page.toString()), false, false);
+            else {
+                this.renderPage(indexContent, indexData, path.join(this.generatePath, this.siteConfig.pageDir, page.toString()), false, true);
+            }
         })
             .then(() => {
             if (posts.length > 0) {
                 if (first)
-                    fs.mkdirSync(this.siteConfig.pageDir);
+                    fs.mkdirSync(path.join(this.generatePath, this.siteConfig.pageDir));
                 this.pagination(posts, page + 1, false);
             }
-        });
+        })
+            .catch((e) => { throw e; });
     }
     /**
      *
