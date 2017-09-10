@@ -202,13 +202,15 @@ class Engine {
             .then(() => frontMatter_1.default.parseFrontMatter(postPath))
             .then((frontMatter) => {
             const urlRegex = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
-            const curTime = moment.now();
+            const postTime = date ? moment(date) : moment();
             const newPost = {
                 fileName: postName,
                 urlName: postName.replace(urlRegex, '-'),
                 title: frontMatter.title,
-                date: curTime,
-                formatedDate: moment(curTime).format(this.customSiteConfig.timeFormat),
+                date: postTime.unix(),
+                formatedDate: postTime.format(this.customSiteConfig.timeFormat),
+                year: postTime.year().toString(),
+                day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
                     this.findDescription(frontMatter_1.default.parsePostStr(postPath)),
@@ -218,9 +220,24 @@ class Engine {
             };
             if (this.curDb.postData.length > 0)
                 this.curDb.postData[0].nextPost = newPost.fileName;
-            // Reference of this neat way of pushing the element to the front of an array:
-            // https://stackoverflow.com/a/39531492/7837815
-            this.curDb.postData = [newPost, ...this.curDb.postData];
+            if (date) {
+                const curDate = newPost.date;
+                let published = false;
+                for (let i = 0; i < this.curDb.postData.length; i++) {
+                    if (curDate >= this.curDb.postData[i].date) {
+                        this.curDb.postData.splice(i, 0, newPost);
+                        published = true;
+                        break;
+                    }
+                }
+                if (!published)
+                    this.curDb.postData.push(newPost);
+            }
+            else {
+                // Reference of this neat way of pushing the element to the front of an array:
+                // https://stackoverflow.com/a/39531492/7837815
+                this.curDb.postData = [newPost, ...this.curDb.postData];
+            }
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
         })
             .then(() => {
@@ -251,7 +268,7 @@ class Engine {
             generatePathRel = path.relative(process.cwd(), generatePath);
             if (exists)
                 throw new duplicateError_1.default(`Directory ${chalk.underline.cyan(generatePathRel)} already exists.` +
-                    ` Run \`${chalk.cyan('ritsu regenerate', dirName)}\` to regenerate blog or specify` +
+                    ` Run \`${chalk.cyan('ritsu reset', dirName)}\` to regenerate blog or specify` +
                     ` another directory name.`, dirName);
         })
             .then(() => log_1.default.logInfo('Generating...'))

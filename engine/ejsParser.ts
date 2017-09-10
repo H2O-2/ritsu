@@ -7,6 +7,7 @@ import * as hljs from 'highlight.js';
 import * as marked from 'marked';
 import * as path from 'path';
 
+import Archive from './archive';
 import Constants from './constants';
 import FrontMatter from './frontMatter';
 import Page from './page';
@@ -64,9 +65,8 @@ class EjsParser {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
         .then(() => this.renderPost())
         .then(() => this.renderHeader())
+        .then(() => this.renderArchive())
         .then(() => this.pagination(this.postArr, 1))
-        // .then(() => this.renderPage(Constants.EJS_ARCHIVE, path.join(this.generatePath, this.siteConfig.archiveDir),
-        //             true, false))
         .catch((e: Error) => { throw e; });
     }
 
@@ -146,6 +146,17 @@ class EjsParser {
         });
     }
 
+    /**
+     *
+     * Implements pagination of index page.
+     *
+     * @private
+     * @param {Post[]} postArr
+     * @param {number} page
+     * @param {boolean} [first=true]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     private pagination(postArr: Post[], page: number, first: boolean = true): Promise<void> {
         const posts: Post[] = postArr;
         const indexData: ejs.Data = this.defaultRenderData;
@@ -177,6 +188,42 @@ class EjsParser {
             }
         })
         .catch((e: Error) => { throw e; });
+    }
+
+    /**
+     *
+     * Render archive page.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
+    private renderArchive(): Promise<void> {
+        const archiveData: ejs.Data = this.defaultRenderData;
+        const initPosts: Post[][] = [[this.postArr[0]]];
+        const page: Archive = {
+            title: 'Archive',
+            posts: initPosts,
+        };
+
+        for (let i = 1; i < this.postArr.length; i++) {
+            const post: Post = this.postArr[i];
+            const curYear: string = post.year;
+
+            if (curYear !== page.posts[page.posts.length - 1][0].year) {
+                page.posts.push(new Array<Post>());
+            }
+
+            page.posts[page.posts.length - 1].push(post);
+        }
+
+        archiveData.page = page;
+
+        return this.renderFile(path.join(this.ejsRoot, Constants.EJS_ARCHIVE), archiveData)
+        .then((archiveStr: string) => {
+            this.renderPage(archiveStr, archiveData, path.join(this.generatePath, this.siteConfig.archiveDir),
+                            false, false);
+        });
     }
 
     /**

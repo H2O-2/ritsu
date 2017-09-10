@@ -31,6 +31,7 @@ pageDir: 'page' # directory for pagination
 archiveDir: 'archive' # directory for archive page
 postDir: 'post' # directory for your posts
 timeFormat: 'MMM D, YYYY' # format of post time, see https://momentjs.com/docs/#/displaying/ for more formats.
+archiveTimeFormat: 'MMM D' # format of time displayed on archive page.
 preprocess: true # Using css preprocessors (sass/scss) or not, default to true
 
 

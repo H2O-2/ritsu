@@ -4,6 +4,8 @@ export default interface Post {
     title: string;
     date: number;
     formatedDate: string;
+    year: string;
+    day: string;
     tags: string[];
     description: string;
     pageUrl: string;

@@ -3,7 +3,9 @@ export default interface Post {
     urlName: string; // file name with unsafe chars replaced
     title: string;
     date: number; // Unix Timestamp (miliseconds)
-    formatedDate: string;
+    formatedDate: string; // formated date generated according to timeFormat field in site-config.yaml
+    year: string;
+    day: string;
     tags: string[];
     description: string;
 

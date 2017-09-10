@@ -43,6 +43,7 @@ declare class EjsParser {
      */
     private renderPost(fileIndex?);
     private pagination(postArr, page, first?);
+    private renderArchive();
     /**
      *
      * Render a page in folder `dirName` or in root directory of publish (index.html)

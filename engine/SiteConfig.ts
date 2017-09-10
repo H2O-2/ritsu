@@ -22,6 +22,7 @@ export default interface SiteConfig {
     archiveDir: string;
     postDir: string;
     timeFormat: string;
+    archiveTimeFormat: string;
 
     repoURL?: string;
     branch?: string;

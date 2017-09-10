@@ -44,6 +44,7 @@ class EjsParser {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
             .then(() => this.renderPost())
             .then(() => this.renderHeader())
+            .then(() => this.renderArchive())
             .then(() => this.pagination(this.postArr, 1))
             .catch((e) => { throw e; });
     }
@@ -136,6 +137,27 @@ class EjsParser {
             }
         })
             .catch((e) => { throw e; });
+    }
+    renderArchive() {
+        const archiveData = this.defaultRenderData;
+        const initPosts = [[this.postArr[0]]];
+        const page = {
+            title: 'Archive',
+            posts: initPosts,
+        };
+        for (let i = 1; i < this.postArr.length; i++) {
+            const post = this.postArr[i];
+            const curYear = post.year;
+            if (curYear !== page.posts[page.posts.length - 1][0].year) {
+                page.posts.push(new Array());
+            }
+            page.posts[page.posts.length - 1].push(post);
+        }
+        archiveData.page = page;
+        return this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_ARCHIVE), archiveData)
+            .then((archiveStr) => {
+            this.renderPage(archiveStr, archiveData, path.join(this.generatePath, this.siteConfig.archiveDir), false, false);
+        });
     }
     /**
      *
