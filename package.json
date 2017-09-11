@@ -1,11 +1,11 @@
 {
   "name": "ritsu",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Static site generator made by TypeScript & Node.js",
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "bin": {
-    "ritsu": "lib/index.js"
+    "ritsu": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
