@@ -15,6 +15,7 @@ import EjsParser from './ejsParser';
 import FrontMatter from './frontMatter';
 import Log from './log';
 import Post from './post';
+import SassParser from './sassParser';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
@@ -303,6 +304,7 @@ export default class Engine {
      */
     public generate(dirName: string) {
         let ejsParser: EjsParser;
+        let sassParser: SassParser;
         let generatePath: string;
         let generatePathRel: string;
 
@@ -328,6 +330,15 @@ export default class Engine {
             fs.mkdirSync(path.join(generatePath, Constants.RES_DIR));
         })
         .then(() => ejsParser.render())
+        .then(() => {
+            const curResDir: string = path.join(this.themePath, Constants.DEFAULT_THEME, Constants.RES_DIR);
+            const genResDir: string = path.join(generatePath, Constants.RES_DIR);
+
+            sassParser = new SassParser(curResDir, genResDir, this.customSiteConfig, this.customThemeConfig);
+            if (this.customSiteConfig.preprocess) {
+                sassParser.render();
+            } else fs.copySync(curResDir, genResDir);
+        })
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {

@@ -42,10 +42,10 @@ class EjsParser {
      */
     render() {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
+            .then(() => this.renderArchive())
             .then(() => this.renderPost())
             .then(() => this.renderHeader())
-            .then(() => this.renderArchive())
-            .then(() => this.pagination(this.postArr, 1))
+            .then(() => this.pagination(JSON.parse(JSON.stringify(this.postArr)), 1))
             .catch((e) => { throw e; });
     }
     /**
@@ -110,6 +110,17 @@ class EjsParser {
             }
         });
     }
+    /**
+     *
+     * Implements pagination of index page.
+     *
+     * @private
+     * @param {Post[]} postArr
+     * @param {number} page
+     * @param {boolean} [first=true]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     pagination(postArr, page, first = true) {
         const posts = postArr;
         const indexData = this.defaultRenderData;
@@ -121,7 +132,7 @@ class EjsParser {
             pageUrl: this.siteConfig.pageDir,
         };
         indexData.page = newPage;
-        return this.renderFile(constants_1.default.EJS_INDEX, indexData)
+        return this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_INDEX), indexData)
             .then((indexContent) => {
             if (first)
                 this.renderPage(indexContent, indexData, this.generatePath, false, true);
@@ -138,6 +149,14 @@ class EjsParser {
         })
             .catch((e) => { throw e; });
     }
+    /**
+     *
+     * Render archive page.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     renderArchive() {
         const archiveData = this.defaultRenderData;
         const initPosts = [[this.postArr[0]]];
@@ -179,7 +198,6 @@ class EjsParser {
             if (!exists && createDir)
                 fs.mkdirSync(dirName);
         })
-            .then(() => process.chdir(this.ejsRoot))
             .then(() => {
             if (inputFile && !fs.pathExistsSync(ejsData))
                 throw new Error(`Please create ${chalk.cyan(ejsData)} first.`);

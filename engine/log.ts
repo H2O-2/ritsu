@@ -28,7 +28,7 @@ export default class Log {
      * Log without chalk.js
      *
      * @static
-     * @param {string} msg 
+     * @param {string} msg
      * @memberof Log
      */
     public static logPlain(msg: string): void {

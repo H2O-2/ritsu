@@ -20,4 +20,5 @@ Constants.EJS_LAYOUT = 'layout.ejs';
 Constants.EJS_POST = 'post.ejs';
 Constants.EJS_ARCHIVE = 'archive.ejs';
 Constants.RES_DIR = 'res';
+Constants.DIST_FILE = 'dist.css';
 exports.default = Constants;

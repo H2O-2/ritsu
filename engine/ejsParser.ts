@@ -63,10 +63,10 @@ class EjsParser {
      */
     public render(): Promise<void> {
         return fs.mkdir(path.join(this.generatePath, this.siteConfig.postDir))
+        .then(() => this.renderArchive())
         .then(() => this.renderPost())
         .then(() => this.renderHeader())
-        .then(() => this.renderArchive())
-        .then(() => this.pagination(this.postArr, 1))
+        .then(() => this.pagination(JSON.parse(JSON.stringify(this.postArr)), 1))
         .catch((e: Error) => { throw e; });
     }
 
@@ -170,7 +170,7 @@ class EjsParser {
 
         indexData.page = newPage;
 
-        return this.renderFile(Constants.EJS_INDEX, indexData)
+        return this.renderFile(path.join(this.ejsRoot, Constants.EJS_INDEX), indexData)
         .then((indexContent: string) => {
 
             if (first)
@@ -247,7 +247,6 @@ class EjsParser {
         .then((exists) => {
             if (!exists && createDir) fs.mkdirSync(dirName);
         })
-        .then(() => process.chdir(this.ejsRoot))
         .then(() => {
             if (inputFile && !fs.pathExistsSync(ejsData))
                 throw new Error(`Please create ${chalk.cyan(ejsData)} first.`);

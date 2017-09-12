@@ -42,7 +42,26 @@ declare class EjsParser {
      * @memberof EjsParser
      */
     private renderPost(fileIndex?);
+    /**
+     *
+     * Implements pagination of index page.
+     *
+     * @private
+     * @param {Post[]} postArr
+     * @param {number} page
+     * @param {boolean} [first=true]
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     private pagination(postArr, page, first?);
+    /**
+     *
+     * Render archive page.
+     *
+     * @private
+     * @returns {Promise<void>}
+     * @memberof EjsParser
+     */
     private renderArchive();
     /**
      *

@@ -19,4 +19,5 @@ export default class Constants {
     public static readonly EJS_ARCHIVE: string = 'archive.ejs';
 
     public static readonly RES_DIR: string = 'res';
+    public static readonly DIST_FILE: string = 'dist.css';
 }

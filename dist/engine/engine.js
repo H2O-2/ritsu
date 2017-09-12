@@ -13,6 +13,7 @@ const duplicateError_1 = require("./duplicateError");
 const ejsParser_1 = require("./ejsParser");
 const frontMatter_1 = require("./frontMatter");
 const log_1 = require("./log");
+const sassParser_1 = require("./sassParser");
 /**
  * The Ritsu Engine, responsible for all operations of the static site generate.
  *
@@ -256,6 +257,7 @@ class Engine {
      */
     generate(dirName) {
         let ejsParser;
+        let sassParser;
         let generatePath;
         let generatePathRel;
         if (!dirName)
@@ -278,6 +280,16 @@ class Engine {
             fs.mkdirSync(path.join(generatePath, constants_1.default.RES_DIR));
         })
             .then(() => ejsParser.render())
+            .then(() => {
+            const curResDir = path.join(this.themePath, constants_1.default.DEFAULT_THEME, constants_1.default.RES_DIR);
+            const genResDir = path.join(generatePath, constants_1.default.RES_DIR);
+            sassParser = new sassParser_1.default(curResDir, genResDir, this.customSiteConfig, this.customThemeConfig);
+            if (this.customSiteConfig.preprocess) {
+                sassParser.render();
+            }
+            else
+                fs.copySync(curResDir, genResDir);
+        })
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {

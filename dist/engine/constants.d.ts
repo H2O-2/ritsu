@@ -17,4 +17,5 @@ export default class Constants {
     static readonly EJS_POST: string;
     static readonly EJS_ARCHIVE: string;
     static readonly RES_DIR: string;
+    static readonly DIST_FILE: string;
 }
