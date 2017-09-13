@@ -41,5 +41,5 @@ preprocess: true # Using css preprocessors (sass/scss) or not, default to true
 ##############################################################
 
 repoURL: 'https://github.com/H2O-2/ritsu' # git repo you are shipping to
-branch: 'master' # git branch you want to use
-commitMsg: 'New post: ' # git commit message, defaut is 'New post: {{postName}}'
+branch: 'master' # git branch you want to push to
+commitMsg: 'Updated blog on ' # git commit message, default is 'Updated blog on ' + current date

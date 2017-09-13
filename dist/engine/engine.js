@@ -66,7 +66,9 @@ class Engine {
             .then(() => log_1.default.logInfo('Fetching theme...'))
             .then(() => {
             if (commandExist.sync('git')) {
-                spawn.sync('git', ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: ['ignore', 'ignore', 'pipe'] });
+                this.git({ stdio: ['ignore', 'ignore', 'pipe'] }, ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath]);
+                // spawn.sync('git', ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
+                //             { stdio: ['ignore', 'ignore', 'pipe'] });
             }
             else {
                 throw new Error(`Git is not installed on your machine!\n\n` +
@@ -450,6 +452,21 @@ class Engine {
         splitDescription.lastIndex = 0;
         const regexArr = splitDescription.exec(postStr);
         return regexArr === null ? '\n' : regexArr[1];
+    }
+    /**
+     *
+     * Runs git command with specified arguments.
+     *
+     * @private
+     * @param {object} [options={ stdio: 'inherit' }]
+     * @param {...string[]} args
+     * @returns {void}
+     * @memberof Engine
+     */
+    git(options = { stdio: 'inherit' }, args) {
+        if (args.length <= 0)
+            return;
+        spawn.sync('git', args, options);
     }
 }
 exports.default = Engine;

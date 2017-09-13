@@ -6,6 +6,13 @@ import Constants from './constants';
 import SiteConfig from './SiteConfig';
 import ThemeConfig from './ThemeConfig';
 
+/**
+ *
+ * Parse Sass.
+ *
+ * @export
+ * @class SassParser
+ */
 export default class SassParser {
     private sassRoot: string; // location of sass files
     private cssRoot: string; // output location of css files
@@ -21,6 +28,12 @@ export default class SassParser {
         this.themeConfig = themeConfig;
     }
 
+    /**
+     *
+     * Parses Sass files to a single css file and copy resources to res folder as well.
+     * @returns {Promise<void>}
+     * @memberof SassParser
+     */
     public render(): Promise<void> {
         return this.renderSass(fs.readFileSync(path.join(this.sassRoot, this.themeConfig.styleEntry), 'utf8'))
         .then((cssData: string) =>
@@ -29,6 +42,15 @@ export default class SassParser {
         .catch((e: Error) => { throw e; });
     }
 
+    /**
+     *
+     * Check recursively for non-style files and copy to res folder as resources.
+     *
+     * @private
+     * @param {number} fileIndex
+     * @returns {Promise<void>}
+     * @memberof SassParser
+     */
     private moveRes(fileIndex: number): Promise<void> {
         if (fileIndex >= this.fileArr.length) return new Promise((resolve) => resolve());
 
@@ -51,6 +73,15 @@ export default class SassParser {
         .catch((e: Error) => { throw e; });
     }
 
+    /**
+     *
+     * Render an Sass string.
+     *
+     * @private
+     * @param {string} sassData
+     * @returns {Promise<string>}
+     * @memberof SassParser
+     */
     private renderSass(sassData: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             sass.render({
@@ -72,9 +103,5 @@ export default class SassParser {
                 resolve(result.css.toString());
             });
         });
-    }
-
-    private readThemeConfig(field: string) {
-        return new sass.types.String();
     }
 }

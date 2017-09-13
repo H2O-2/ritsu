@@ -4,6 +4,13 @@ const fs = require("fs-extra");
 const sass = require("node-sass");
 const path = require("path");
 const constants_1 = require("./constants");
+/**
+ *
+ * Parse Sass.
+ *
+ * @export
+ * @class SassParser
+ */
 class SassParser {
     constructor(sassRoot, cssRoot, siteConfig, themeConfig) {
         this.sassRoot = sassRoot;
@@ -12,12 +19,27 @@ class SassParser {
         this.siteConfig = siteConfig;
         this.themeConfig = themeConfig;
     }
+    /**
+     *
+     * Parses Sass files to a single css file and copy resources to res folder as well.
+     * @returns {Promise<void>}
+     * @memberof SassParser
+     */
     render() {
         return this.renderSass(fs.readFileSync(path.join(this.sassRoot, this.themeConfig.styleEntry), 'utf8'))
             .then((cssData) => fs.writeFile(path.join(this.cssRoot, constants_1.default.DIST_FILE), cssData, { encoding: 'utf8' }))
             .then(() => this.moveRes(0))
             .catch((e) => { throw e; });
     }
+    /**
+     *
+     * Check recursively for non-style files and copy to res folder as resources.
+     *
+     * @private
+     * @param {number} fileIndex
+     * @returns {Promise<void>}
+     * @memberof SassParser
+     */
     moveRes(fileIndex) {
         if (fileIndex >= this.fileArr.length)
             return new Promise((resolve) => resolve());
@@ -37,6 +59,15 @@ class SassParser {
         })
             .catch((e) => { throw e; });
     }
+    /**
+     *
+     * Render an Sass string.
+     *
+     * @private
+     * @param {string} sassData
+     * @returns {Promise<string>}
+     * @memberof SassParser
+     */
     renderSass(sassData) {
         return new Promise((resolve, reject) => {
             sass.render({
@@ -58,9 +89,6 @@ class SassParser {
                 resolve(result.css.toString());
             });
         });
-    }
-    readThemeConfig(field) {
-        return new sass.types.String();
     }
 }
 exports.default = SassParser;

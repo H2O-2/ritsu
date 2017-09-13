@@ -142,4 +142,15 @@ export default class Engine {
      * @memberof Engine
      */
     private findDescription(postStr);
+    /**
+     *
+     * Runs git command with specified arguments.
+     *
+     * @private
+     * @param {object} [options={ stdio: 'inherit' }]
+     * @param {...string[]} args
+     * @returns {void}
+     * @memberof Engine
+     */
+    private git(options, args);
 }
