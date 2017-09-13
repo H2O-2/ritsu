@@ -20,4 +20,7 @@ export default class Constants {
 
     public static readonly RES_DIR: string = 'res';
     public static readonly DIST_FILE: string = 'dist.css';
+
+    public static readonly DEPLOY_DIR: string = '.deploy.git';
+    public static readonly README_FILE: string = 'README.md';
 }

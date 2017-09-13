@@ -40,6 +40,8 @@ preprocess: true # Using css preprocessors (sass/scss) or not, default to true
 ##################        Deployment         #################
 ##############################################################
 
-repoURL: 'https://github.com/H2O-2/ritsu' # git repo you are shipping to
+userName: H2O-2 # your user name on GitHub
+userEmail: h2o-2@qq.com # your email on GitHub
+repoURL: 'https://github.com/H2O-2/ritsu-test.git' # git repo you are shipping to
 branch: 'master' # git branch you want to push to
 commitMsg: 'Updated blog on ' # git commit message, default is 'Updated blog on ' + current date

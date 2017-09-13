@@ -22,6 +22,8 @@ export default interface SiteConfig {
     timeFormat: string;
     archiveTimeFormat: string;
     preprocess: boolean;
+    userName: string;
+    userEmail: string;
     repoURL?: string;
     branch?: string;
     commitMsg?: string;

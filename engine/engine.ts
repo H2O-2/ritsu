@@ -98,8 +98,8 @@ export default class Engine {
         .then(() => Log.logInfo('Fetching theme...'))
         .then(() => {
             if (commandExist.sync('git')) {
-                this.git({ stdio: ['ignore', 'ignore', 'pipe'] },
-                         ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath]);
+                this.git(['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
+                         { stdio: ['ignore', 'ignore', 'pipe'] }, this.rootPath);
             } else {
                 throw new Error(`Git is not installed on your machine!\n\n` +
                 `Check ${chalk.underline('https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}` +
@@ -373,6 +373,57 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
+    public deploy(dirName: string) {
+        let deployPath: string;
+        let generatePath: string;
+
+        if (!dirName) dirName = Constants.DEFAULT_GENERATE_DIR;
+
+        this.readDb()
+        .then(() => this.updateConfig())
+        .then(() => {
+            deployPath = path.join(this.rootPath, Constants.DEPLOY_DIR);
+            generatePath = path.join(this.rootPath, dirName);
+        })
+        .then(() => fs.pathExists(generatePath))
+        .then((exists: boolean) => {
+            if (!exists)
+                throw new Error(`Directory ${chalk.cyan(dirName)} does not exists!`);
+        })
+        .then(() => fs.pathExists(deployPath))
+        .then((exists: boolean) => {
+            if (exists) return;
+
+            Log.logInfo('First, initializing your Git repository...');
+            fs.mkdirSync(deployPath);
+            process.chdir(deployPath);
+
+            this.git(['init'], { stdio: ['ignore', 'ignore', 'pipe'] });
+            this.git(['config', 'user.name', this.customSiteConfig.userName],
+                     { stdio: ['ignore', 'ignore', 'pipe'] });
+            this.git(['config', 'user.email', this.customSiteConfig.userEmail],
+                     { stdio: ['ignore', 'ignore', 'pipe'] });
+            Log.logInfo('Initialization complete!');
+        })
+        .then(() => {
+            Log.logInfo('Deploying...');
+        })
+        .then(() => fs.copy(generatePath, deployPath))
+        .then(() => fs.createFile(path.join(deployPath, Constants.README_FILE)))
+        .then(() => {
+            if (!this.customSiteConfig.repoURL)
+                throw new Error('Please set the URL to your Git repo in site-config.yaml file.');
+
+            this.git(['add', '-A']);
+            this.git(['commit', '-m', `${this.customSiteConfig.commitMsg}` +
+                     `${moment().format(this.customSiteConfig.timeFormat)}`]);
+            this.git(['push', '-u', this.customSiteConfig.repoURL,
+                        `HEAD:${this.customSiteConfig.branch ? this.customSiteConfig.branch : 'master'}`, '--force']);
+            Log.logInfo('Deployment complete!');
+        })
+        .catch((e: Error) => Log.logErr(e.message));
+    }
+
     /**
      *
      * Check if postName already exists in .db.json
@@ -418,7 +469,7 @@ export default class Engine {
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
             .then((data: SiteDb) => {
-                if (!data.rootPath)
+                if (!data)
                     throw new Error(`Please execute this command in blog directory or run` +
                                     ` \`${chalk.cyan('ritsu init')}\` first`);
 
@@ -525,9 +576,11 @@ export default class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    private git(options: object = { stdio: 'inherit' }, args: string[]): void {
+    private git(args: string[], options: object = { stdio: 'inherit' },
+                cwd: string = path.join(this.rootPath, Constants.DEPLOY_DIR)): void {
         if (args.length <= 0) return;
 
+        Object.assign(options, { cwd });
         spawn.sync('git', args, options);
     }
 }

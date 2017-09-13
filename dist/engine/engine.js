@@ -66,9 +66,7 @@ class Engine {
             .then(() => log_1.default.logInfo('Fetching theme...'))
             .then(() => {
             if (commandExist.sync('git')) {
-                this.git({ stdio: ['ignore', 'ignore', 'pipe'] }, ['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath]);
-                // spawn.sync('git', ['clone', Constants.GIT_REPO_THEME_NOTES, defaultThemePath],
-                //             { stdio: ['ignore', 'ignore', 'pipe'] });
+                this.git(['clone', constants_1.default.GIT_REPO_THEME_NOTES, defaultThemePath], { stdio: ['ignore', 'ignore', 'pipe'] }, this.rootPath);
             }
             else {
                 throw new Error(`Git is not installed on your machine!\n\n` +
@@ -323,6 +321,51 @@ class Engine {
             .then(() => log_1.default.logInfo(`Directory ${chalk.blue.underline(path.relative(process.cwd(), dirName))} deleted!`))
             .catch((e) => log_1.default.logErr(e.message));
     }
+    deploy(dirName) {
+        let deployPath;
+        let generatePath;
+        if (!dirName)
+            dirName = constants_1.default.DEFAULT_GENERATE_DIR;
+        this.readDb()
+            .then(() => this.updateConfig())
+            .then(() => {
+            deployPath = path.join(this.rootPath, constants_1.default.DEPLOY_DIR);
+            generatePath = path.join(this.rootPath, dirName);
+        })
+            .then(() => fs.pathExists(generatePath))
+            .then((exists) => {
+            if (!exists)
+                throw new Error(`Directory ${chalk.cyan(dirName)} does not exists!`);
+        })
+            .then(() => fs.pathExists(deployPath))
+            .then((exists) => {
+            if (exists)
+                return;
+            log_1.default.logInfo('First, initializing your Git repository...');
+            fs.mkdirSync(deployPath);
+            process.chdir(deployPath);
+            this.git(['init'], { stdio: ['ignore', 'ignore', 'pipe'] });
+            this.git(['config', 'user.name', this.customSiteConfig.userName], { stdio: ['ignore', 'ignore', 'pipe'] });
+            this.git(['config', 'user.email', this.customSiteConfig.userEmail], { stdio: ['ignore', 'ignore', 'pipe'] });
+            log_1.default.logInfo('Initialization complete!');
+        })
+            .then(() => {
+            log_1.default.logInfo('Deploying...');
+        })
+            .then(() => fs.copy(generatePath, deployPath))
+            .then(() => fs.createFile(path.join(deployPath, constants_1.default.README_FILE)))
+            .then(() => {
+            if (!this.customSiteConfig.repoURL)
+                throw new Error('Please set the URL to your Git repo in site-config.yaml file.');
+            this.git(['add', '-A']);
+            this.git(['commit', '-m', `${this.customSiteConfig.commitMsg}` +
+                    `${moment().format(this.customSiteConfig.timeFormat)}`]);
+            this.git(['push', '-u', this.customSiteConfig.repoURL,
+                `HEAD:${this.customSiteConfig.branch ? this.customSiteConfig.branch : 'master'}`, '--force']);
+            log_1.default.logInfo('Deployment complete!');
+        })
+            .catch((e) => log_1.default.logErr(e.message));
+    }
     /**
      *
      * Check if postName already exists in .db.json
@@ -365,7 +408,7 @@ class Engine {
     readDb() {
         return this.findDb(process.cwd())
             .then((data) => {
-            if (!data.rootPath)
+            if (!data)
                 throw new Error(`Please execute this command in blog directory or run` +
                     ` \`${chalk.cyan('ritsu init')}\` first`);
             this.rootPath = data.rootPath;
@@ -463,9 +506,10 @@ class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    git(options = { stdio: 'inherit' }, args) {
+    git(args, options = { stdio: 'inherit' }, cwd = path.join(this.rootPath, constants_1.default.DEPLOY_DIR)) {
         if (args.length <= 0)
             return;
+        Object.assign(options, { cwd });
         spawn.sync('git', args, options);
     }
 }

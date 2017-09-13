@@ -21,4 +21,6 @@ Constants.EJS_POST = 'post.ejs';
 Constants.EJS_ARCHIVE = 'archive.ejs';
 Constants.RES_DIR = 'res';
 Constants.DIST_FILE = 'dist.css';
+Constants.DEPLOY_DIR = '.deploy.git';
+Constants.README_FILE = 'README.md';
 exports.default = Constants;

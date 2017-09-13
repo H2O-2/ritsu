@@ -35,4 +35,8 @@ program.command('purge <dirName>').description('Purge generated blog').action((d
     const engine = new engine_1.default();
     engine.purge(dirName);
 });
+program.command('deploy [dirName]').description('Deploy Site').action((dirName) => {
+    const engine = new engine_1.default();
+    engine.deploy(dirName);
+});
 program.version(VER).description(DESCRIPTION).parse(process.argv);

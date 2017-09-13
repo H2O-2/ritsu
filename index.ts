@@ -50,4 +50,10 @@ program.command('purge <dirName>').description('Purge generated blog').action((d
     engine.purge(dirName);
 });
 
+program.command('deploy [dirName]').description('Deploy Site').action((dirName: string) => {
+    const engine = new Engine();
+
+    engine.deploy(dirName);
+});
+
 program.version(VER).description(DESCRIPTION).parse(process.argv);

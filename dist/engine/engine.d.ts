@@ -73,6 +73,7 @@ export default class Engine {
      * @memberof Engine
      */
     purge(dirName: string): void;
+    deploy(dirName: string): void;
     /**
      *
      * Check if postName already exists in .db.json
@@ -152,5 +153,5 @@ export default class Engine {
      * @returns {void}
      * @memberof Engine
      */
-    private git(options, args);
+    private git(args, options?, cwd?);
 }
