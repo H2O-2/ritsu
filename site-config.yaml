@@ -14,7 +14,7 @@ personalPage: 'https://github.com/H2O-2' # personal page of user
 
 #Open Graph Data
 og: !!map
-  image: 'favicon.ico'
+  image: '/res/img/head.img' # default image, can be changed in front matter of posts.
   title: 'Kawaisou'
   description: 'Place for my thoughts'
 

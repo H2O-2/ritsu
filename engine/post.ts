@@ -8,6 +8,7 @@ export default interface Post {
     day: string;
     tags: string[];
     description: string;
+    headImg: string|null;
 
     pageUrl: string; // name of the directory of posts, default to 'posts' in site-config.yaml
     prevPost: string|null;

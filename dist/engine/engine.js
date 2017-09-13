@@ -215,6 +215,7 @@ class Engine {
                 tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
                     this.findDescription(frontMatter_1.default.parsePostStr(postPath)),
+                headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
                 nextPost: null,

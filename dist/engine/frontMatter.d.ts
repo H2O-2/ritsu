@@ -2,6 +2,7 @@ export interface FrontMatterObj {
     title: string;
     tags: string[];
     description?: string;
+    headImg?: string;
 }
 /**
  *

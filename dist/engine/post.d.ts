@@ -8,6 +8,7 @@ export default interface Post {
     day: string;
     tags: string[];
     description: string;
+    headImg: string | null;
     pageUrl: string;
     prevPost: string | null;
     nextPost: string | null;
