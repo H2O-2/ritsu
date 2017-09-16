@@ -10,6 +10,7 @@ export default interface Post {
     description: string;
     headImg: string | null;
     pageUrl: string;
+    canonical: string;
     prevPost: string | null;
     nextPost: string | null;
 }

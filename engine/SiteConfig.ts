@@ -17,6 +17,7 @@ export default interface SiteConfig {
     og: Map<string, string>;
 
     theme: string;
+    rootURL: string;
     rootDir: string;
     pageDir: string;
     archiveDir: string;

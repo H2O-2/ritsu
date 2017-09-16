@@ -20,4 +20,5 @@ export default class Constants {
     static readonly DIST_FILE: string;
     static readonly DEPLOY_DIR: string;
     static readonly README_FILE: string;
+    static readonly UPDATE_BACK: string;
 }

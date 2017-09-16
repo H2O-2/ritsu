@@ -15,6 +15,7 @@ export default interface SiteConfig {
     personalPage?: string;
     og: Map<string, string>;
     theme: string;
+    rootURL: string;
     rootDir: string;
     pageDir: string;
     archiveDir: string;

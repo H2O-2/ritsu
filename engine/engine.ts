@@ -261,6 +261,7 @@ export default class Engine {
                                                        this.findDescription(FrontMatter.parsePostStr(postPath)),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
+                canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
                 prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
                 nextPost: null,
             };
@@ -320,7 +321,7 @@ export default class Engine {
 
             if (exists)
                 throw new DuplicateError(`Directory ${chalk.underline.cyan(generatePathRel)} already exists.` +
-                ` Run \`${chalk.cyan('ritsu reset', dirName)}\` to regenerate blog or specify` +
+                ` Run \`${chalk.cyan('ritsu purge', dirName)}\` to delete the blog first or specify` +
                 ` another directory name.`, dirName);
         })
         .then(() => Log.logInfo('Generating...'))
@@ -346,6 +347,46 @@ export default class Engine {
             Log.logErr(e.stack);
             this.abortGen(e, generatePath);
         });
+    }
+
+    public update(dirName: string) {
+        let ejsParser: EjsParser;
+        let updatePath: string;
+        let backupPath: string;
+        let publishExists: boolean;
+
+        if (!dirName) dirName = Constants.DEFAULT_GENERATE_DIR;
+
+        this.readDb()
+        .then(() => this.updateConfig()
+        .then(() => Log.logInfo('Updating...'))
+        .then(() => {
+            updatePath = path.join(this.rootPath, dirName);
+            backupPath = path.join(this.rootPath, Constants.UPDATE_BACK);
+        })
+        .then(() => fs.pathExists(updatePath))
+        .then((exists: boolean) => {
+            if (!exists) throw new Error(`Directory ${chalk.cyan(dirName)} does not exist.`)
+        })
+        .then(() => publishExists = true)
+        .then(() => fs.rename(updatePath, backupPath)) // rename old publish directory to .publish_back
+        .then(() => fs.mkdir(updatePath))
+        .then(() => fs.copy(backupPath, updatePath))
+        .then(() => ejsParser = new EjsParser(this.rootPath, this.postPath, updatePath, this.themePath,
+            this.curDb.postData, this.customSiteConfig, this.customThemeConfig)))
+        .then(() => ejsParser.update())
+        .then(() => spawn.sync('rm', ['-rf', backupPath], { stdio: 'inherit' }))
+        .then(() => Log.logInfo('Note: This will only change HTML files related to new posts.'))
+        .then(() => Log.logInfo(`If you want to apply more changes, ${chalk.blue('purge')} the site and ` +
+                                `${chalk.blue('generate')} again.`))
+        .then(() => Log.logInfo('Update Complete!'))
+        .catch((e: Error) => {
+            Log.logErr(e.stack);
+            this.abortGen(e, updatePath)
+            .then(() => {
+                if (publishExists) fs.renameSync(backupPath, updatePath); // recover .publish_back
+            })
+        })
     }
 
     /**
@@ -537,8 +578,8 @@ export default class Engine {
      * @param {string} dirName
      * @memberof Engine
      */
-    private abortGen(engineError: DuplicateError|Error, dirName: string): void {
-        fs.pathExists(this.rootPath)
+    private abortGen(engineError: DuplicateError|Error, dirName: string): Promise<void> {
+        return fs.pathExists(this.rootPath)
         .then((exists: boolean) => {
             if (exists) {
                 Log.logPlain(chalk.bgRed.black('Reverting changes...'));

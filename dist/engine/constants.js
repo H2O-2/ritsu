@@ -23,4 +23,5 @@ Constants.RES_DIR = 'res';
 Constants.DIST_FILE = 'dist.css';
 Constants.DEPLOY_DIR = '.deploy.git';
 Constants.README_FILE = 'README.md';
+Constants.UPDATE_BACK = '.publish_backup';
 exports.default = Constants;

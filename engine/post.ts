@@ -11,6 +11,7 @@ export default interface Post {
     headImg: string|null;
 
     pageUrl: string; // name of the directory of posts, default to 'posts' in site-config.yaml
+    canonical: string;
     prevPost: string|null;
     nextPost: string|null;
 }

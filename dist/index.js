@@ -6,9 +6,6 @@ const process = require("process");
 const engine_1 = require("./engine/engine");
 const VER = 'v0.0.1';
 const DESCRIPTION = 'For Ritsu 📖\n\n  A simple static site generator.';
-if (!process.argv.slice(2).length) {
-    program.description(DESCRIPTION).help();
-}
 program.command('init [blog]').alias('i').description('Initialize a new blog').action((blog) => {
     const engine = new engine_1.default();
     engine.init(blog);
@@ -39,4 +36,11 @@ program.command('deploy [dirName]').description('Deploy Site').action((dirName) 
     const engine = new engine_1.default();
     engine.deploy(dirName);
 });
+program.command('update [dirname]').alias('u').description('Update Site').action((dirName, option) => {
+    const engine = new engine_1.default();
+    engine.update(dirName);
+});
 program.version(VER).description(DESCRIPTION).parse(process.argv);
+if (!process.argv.slice(2).length) {
+    program.description(DESCRIPTION).help();
+}

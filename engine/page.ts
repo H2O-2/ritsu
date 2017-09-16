@@ -5,4 +5,5 @@ export default interface Page {
     postArr: Post[];
     lastPage: boolean;
     pageUrl: string;
+    canonical: string;
 }

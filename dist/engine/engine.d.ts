@@ -65,6 +65,7 @@ export default class Engine {
      * @memberof Engine
      */
     generate(dirName: string): void;
+    update(dirName: string): void;
     /**
      *
      * Delete the blog generated.

@@ -22,6 +22,7 @@ declare class EjsParser {
      * @memberof EjsParser
      */
     render(): Promise<void>;
+    update(): Promise<void>;
     /**
      *
      * Render all pages that header links directs to.

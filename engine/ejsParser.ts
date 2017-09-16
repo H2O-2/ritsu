@@ -70,6 +70,13 @@ class EjsParser {
         .catch((e: Error) => { throw e; });
     }
 
+    public update(): Promise<void> {
+        return this.renderArchive()
+        .then(() => this.renderPost())
+        .then(() => this.pagination(JSON.parse(JSON.stringify(this.postArr)), 1))
+        .catch((e: Error) => { throw e; });
+    }
+
     /**
      *
      * Render all pages that header links directs to.
@@ -95,7 +102,7 @@ class EjsParser {
                     .then((exists) => {
                         if (!exists && !isAbsolute.test(headers[headName])) {
                             const headerData = this.defaultRenderData;
-                            headerData.page = { title: headName };
+                            headerData.page = { title: headName, canonical: `/${headName.toLowerCase()}/` };
 
                             return this.renderPage(path.join(this.themePath, Constants.CUSTOM_HEADER_DIR,
                                                     `${headName.toLowerCase()}.ejs`), headerData, headLink,
@@ -166,6 +173,7 @@ class EjsParser {
             postArr: pagePosts,
             lastPage: posts.length === 0,
             pageUrl: this.siteConfig.pageDir,
+            canonical: page > 1 ? `/${this.siteConfig.pageDir}/${page}/` : '/',
         };
 
         indexData.page = newPage;
@@ -182,7 +190,9 @@ class EjsParser {
         })
         .then(() => {
             if (posts.length > 0) {
-                if (first) fs.mkdirSync(path.join(this.generatePath, this.siteConfig.pageDir));
+                const pageDir: string = path.join(this.generatePath, this.siteConfig.pageDir);
+
+                if (first && !fs.pathExistsSync(pageDir)) fs.mkdirSync(pageDir);
 
                 this.pagination(posts, page + 1, false);
             }
@@ -204,6 +214,7 @@ class EjsParser {
         const page: Archive = {
             title: 'Archive',
             posts: initPosts,
+            canonical: `/${this.siteConfig.archiveDir}/`,
         };
 
         for (let i = 1; i < this.postArr.length; i++) {

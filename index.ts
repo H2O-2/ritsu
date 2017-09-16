@@ -8,9 +8,7 @@ import Engine from './engine/engine';
 const VER: string = 'v0.0.1';
 const DESCRIPTION: string = 'For Ritsu 📖\n\n  A simple static site generator.';
 
-if (!process.argv.slice(2).length) {
-    program.description(DESCRIPTION).help();
-}
+
 
 program.command('init [blog]').alias('i').description('Initialize a new blog').action((blog: string) => {
     const engine = new Engine();
@@ -56,4 +54,14 @@ program.command('deploy [dirName]').description('Deploy Site').action((dirName: 
     engine.deploy(dirName);
 });
 
+program.command('update [dirname]').alias('u').description('Update Site').action((dirName: string, option) => {
+    const engine = new Engine();
+
+    engine.update(dirName);
+})
+
 program.version(VER).description(DESCRIPTION).parse(process.argv);
+
+if (!process.argv.slice(2).length) {
+    program.description(DESCRIPTION).help();
+}

@@ -23,4 +23,6 @@ export default class Constants {
 
     public static readonly DEPLOY_DIR: string = '.deploy.git';
     public static readonly README_FILE: string = 'README.md';
+
+    public static readonly UPDATE_BACK: string = '.publish_backup';
 }
