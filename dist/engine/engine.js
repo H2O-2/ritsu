@@ -248,7 +248,7 @@ class Engine {
                 log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                     `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-            .catch((e) => log_1.default.logErr(e.stack));
+            .catch((e) => log_1.default.logErr(e.message));
     }
     /**
      *
@@ -295,7 +295,7 @@ class Engine {
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {
-            log_1.default.logErr(e.stack);
+            log_1.default.logErr(e.message);
             this.abortGen(e, generatePath);
         });
     }
@@ -330,7 +330,7 @@ class Engine {
             `${chalk.blue('generate')} again.`))
             .then(() => log_1.default.logInfo('Update Complete!'))
             .catch((e) => {
-            log_1.default.logErr(e.stack);
+            log_1.default.logErr(e.message);
             this.abortGen(e, updatePath)
                 .then(() => {
                 if (publishExists)

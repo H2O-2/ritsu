@@ -1,1 +1,6 @@
-<div class="about"></div>
+<div class="content about">
+    <h2>Fill in content or change header EJS file in your-blog-dir/themes/custom/</h2>
+    <% if (site.comment) { %>
+            <%- include('parts/comment') %>
+    <% } %>
+</div>

@@ -72,16 +72,22 @@ class EjsParser {
         for (const headName in headers) {
             if (headers.hasOwnProperty(headName)) {
                 const headLink = path.join(this.generatePath, headers[headName]);
-                headerPromiseArr.push(fs.pathExists(headLink)
-                    .then((exists) => {
-                    if (!exists && !isAbsolute.test(headers[headName])) {
-                        const headerData = this.defaultRenderData;
-                        headerData.page = {
-                            title: headName,
-                            canonical: `/${headName.toLowerCase()}/`,
-                            fileName: headName,
-                        };
-                        return this.renderPage(path.join(this.themePath, constants_1.default.CUSTOM_HEADER_DIR, `${headName.toLowerCase()}.ejs`), headerData, headLink, true, false);
+                const headerData = this.defaultRenderData;
+                const fileName = headName.toLowerCase();
+                headerPromiseArr.push(fs.readFile(path.join(this.ejsRoot, constants_1.default.EJS_HEADERS, `${fileName}.md`), 'utf8')
+                    .then((headContent) => marked(headContent))
+                    .then((headMarked) => {
+                    headerData.page = {
+                        title: headName,
+                        canonical: `/${fileName}/`,
+                        fileName: headName,
+                    };
+                    headerData.contents = headMarked;
+                    return this.renderFile(path.join(this.ejsRoot, constants_1.default.EJS_HEADERS, `${fileName}.ejs`), headerData);
+                })
+                    .then((headerStr) => {
+                    if (!fs.pathExistsSync(headLink) && !isAbsolute.test(headers[headName])) {
+                        return this.renderPage(headerStr, headerData, headLink, false, false);
                     }
                 }));
             }

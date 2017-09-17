@@ -96,21 +96,28 @@ class EjsParser {
         for (const headName in headers) {
             if (headers.hasOwnProperty(headName)) {
                 const headLink: string = path.join(this.generatePath, headers[headName]);
+                const headerData = this.defaultRenderData;
+                const fileName: string = headName.toLowerCase();
 
                 headerPromiseArr.push(
-                    fs.pathExists(headLink)
-                    .then((exists) => {
-                        if (!exists && !isAbsolute.test(headers[headName])) {
-                            const headerData = this.defaultRenderData;
-                            headerData.page = {
-                                title: headName,
-                                canonical: `/${headName.toLowerCase()}/`,
-                                fileName: headName,
-                            };
+                    fs.readFile(path.join(this.ejsRoot, Constants.EJS_HEADERS, `${fileName}.md`), 'utf8')
+                    .then((headContent: string) => marked(headContent))
+                    .then((headMarked: string) => {
+                        headerData.page = {
+                            title: headName,
+                            canonical: `/${fileName}/`,
+                            fileName: headName,
+                        };
+                        headerData.contents = headMarked;
 
-                            return this.renderPage(path.join(this.themePath, Constants.CUSTOM_HEADER_DIR,
-                                                    `${headName.toLowerCase()}.ejs`), headerData, headLink,
-                                                    true, false);
+                        return this.renderFile(path.join(this.ejsRoot, Constants.EJS_HEADERS,
+                                                `${fileName}.ejs`), headerData);
+                    })
+                    .then((headerStr: string) => {
+                        if (!fs.pathExistsSync(headLink) && !isAbsolute.test(headers[headName])) {
+
+                            return this.renderPage(headerStr, headerData, headLink,
+                                                    false, false);
                         }
                     }),
                 );

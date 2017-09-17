@@ -294,7 +294,7 @@ export default class Engine {
                 Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                             `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-        .catch((e: Error) => Log.logErr(e.stack));
+        .catch((e: Error) => Log.logErr(e.message));
     }
 
     /**
@@ -344,7 +344,7 @@ export default class Engine {
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
-            Log.logErr(e.stack);
+            Log.logErr(e.message);
             this.abortGen(e, generatePath);
         });
     }
@@ -381,7 +381,7 @@ export default class Engine {
                                 `${chalk.blue('generate')} again.`))
         .then(() => Log.logInfo('Update Complete!'))
         .catch((e: Error) => {
-            Log.logErr(e.stack);
+            Log.logErr(e.message);
             this.abortGen(e, updatePath)
             .then(() => {
                 if (publishExists) fs.renameSync(backupPath, updatePath); // recover .publish_back
