@@ -33,6 +33,8 @@ postDir: 'post' # directory for your posts
 timeFormat: 'MMM D, YYYY' # format of post time, see https://momentjs.com/docs/#/displaying/ for more formats.
 archiveTimeFormat: 'MMM D' # format of time displayed on archive page.
 preprocess: true # Using css preprocessors (sass/scss) or not, default to true
+disqusShortname: 'h2o2' # Your disqus short name
+comment: true # display disqus comment by default (note that disqus not accessible in China)
 
 
 

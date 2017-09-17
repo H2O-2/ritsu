@@ -102,7 +102,11 @@ class EjsParser {
                     .then((exists) => {
                         if (!exists && !isAbsolute.test(headers[headName])) {
                             const headerData = this.defaultRenderData;
-                            headerData.page = { title: headName, canonical: `/${headName.toLowerCase()}/` };
+                            headerData.page = {
+                                title: headName,
+                                canonical: `/${headName.toLowerCase()}/`,
+                                fileName: headName,
+                            };
 
                             return this.renderPage(path.join(this.themePath, Constants.CUSTOM_HEADER_DIR,
                                                     `${headName.toLowerCase()}.ejs`), headerData, headLink,

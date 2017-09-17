@@ -9,7 +9,6 @@ export default interface ThemeConfig {
     postPerPage: number;
     isIndex: boolean;
     header: HeaderObj;
-    autoComment: boolean;
     share: string[];
     [key: string]: any;
 }
