@@ -5,6 +5,7 @@ const commandExist = require("command-exists");
 const spawn = require("cross-spawn");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
+const marked = require("marked");
 const moment = require("moment");
 const path = require("path");
 const process = require("process");
@@ -214,7 +215,7 @@ class Engine {
                 day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
-                    this.findDescription(frontMatter_1.default.parsePostStr(postPath)),
+                    marked(this.findDescription(frontMatter_1.default.parsePostStr(postPath))),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
@@ -248,7 +249,7 @@ class Engine {
                 log_1.default.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                     `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-            .catch((e) => log_1.default.logErr(e.message));
+            .catch((e) => log_1.default.logErr(e.stack));
     }
     /**
      *
@@ -532,9 +533,9 @@ class Engine {
      * @memberof Engine
      */
     findDescription(postStr) {
-        const splitDescription = /^[\n]*(.*?)[\n]*<!-- description -->/;
-        splitDescription.lastIndex = 0;
-        const regexArr = splitDescription.exec(postStr);
+        const splitDescription = /^[\n]*([\s\S]*)<!-- description -->/;
+        const regexArr = postStr.match(splitDescription);
+        console.log(regexArr);
         return regexArr === null ? '\n' : regexArr[1];
     }
     /**

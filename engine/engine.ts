@@ -258,7 +258,7 @@ export default class Engine {
                 day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
                 description: frontMatter.description ? frontMatter.description :
-                                                       this.findDescription(FrontMatter.parsePostStr(postPath)),
+                                                       marked(this.findDescription(FrontMatter.parsePostStr(postPath))),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
@@ -294,7 +294,7 @@ export default class Engine {
                 Log.logInfo(`Successfully published your post ${chalk.black.underline(postName)}.\n` +
                             `Run \`${chalk.blue('ritsu generate')}\` to build your blog.`);
         })
-        .catch((e: Error) => Log.logErr(e.message));
+        .catch((e: Error) => Log.logErr(e.stack));
     }
 
     /**
@@ -600,10 +600,11 @@ export default class Engine {
      * @memberof Engine
      */
     private findDescription(postStr: string): string {
-        const splitDescription: RegExp = /^[\n]*(.*?)[\n]*<!-- description -->/;
+        const splitDescription: RegExp= /^[\n]*([\s\S]*)<!-- description -->/;
 
-        splitDescription.lastIndex = 0;
-        const regexArr: RegExpExecArray|null = splitDescription.exec(postStr);
+        const regexArr = postStr.match(splitDescription);
+
+        console.log(regexArr);
 
         return regexArr === null ? '\n' : regexArr[1];
     }

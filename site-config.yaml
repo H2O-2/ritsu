@@ -10,7 +10,7 @@ authorDescription: '趣味は読書です'
 siteIcon: 'img/favicon.ico' # the path to site icon
 createTime: '2017' # creation time of the site
 avatar: 'img/avatar.jpg' # avatar of user
-personalPage: 'https://github.com/H2O-2' # personal page of user
+personalPage: '#' # personal page of user
 
 #Open Graph Data
 og: !!map
@@ -25,7 +25,7 @@ og: !!map
 ##############################################################
 
 theme: 'theme-notes' # theme to use for your site
-rootURL: 'http://blog.h2o2.com/' # the root URL of your blog, i.e. URL without subdirectories
+rootURL: 'http://blog.com/' # the root URL of your blog, i.e. URL without subdirectories
 rootDir: '/' # this is the root directory of your blog. E.g. if the blog URL is blog.name.com, then the value should be '/'
 pageDir: 'page' # directory for pagination
 archiveDir: 'archive' # directory for archive page
@@ -42,8 +42,8 @@ comment: true # display disqus comment by default (note that disqus not accessib
 ##################        Deployment         #################
 ##############################################################
 
-userName: H2O-2 # your user name on GitHub
-userEmail: h2o-2@qq.com # your email on GitHub
-repoURL: 'https://github.com/H2O-2/ritsu-test.git' # git repo you are shipping to
+userName: # your user name on GitHub
+userEmail: # your email on GitHub
+repoURL: '' # git repo you are shipping to
 branch: 'master' # git branch you want to push to
 commitMsg: 'Updated blog on ' # git commit message, default is 'Updated blog on ' + current date

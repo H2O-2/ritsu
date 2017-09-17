@@ -16,7 +16,8 @@ export interface FrontMatterObj {
  * @class FrontMatter
  */
 export default class FrontMatter {
-    public static readonly splitRegex: RegExp = /^\n*-{3,}\n([\s\S]+\n)+-{3,}\n/;
+    // reference: https://github.com/hexojs/hexo-front-matter/blob/master/lib/front_matter.js
+    public static readonly splitRegex: RegExp = /(-{3,})\n([\s\S]+?)\n(?:$|\n([\s\S]*)$)/;
 
     /**
      *
@@ -35,7 +36,11 @@ export default class FrontMatter {
             if (!frontMatterStr)
                 throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
 
-            return yaml.safeLoad(frontMatterStr[1]);
+            let frontMatter = frontMatterStr[2];
+
+            frontMatter = frontMatter.substr(0, frontMatter.length - 3);
+
+            return yaml.safeLoad(frontMatter);
         });
     }
 
@@ -50,7 +55,18 @@ export default class FrontMatter {
      */
     public static parsePost(postPath: string): Promise<string> {
         return fs.readFile(postPath, 'utf8')
-        .then((postStr: string) => postStr.replace(this.splitRegex, ''));
+        .then((postStr: string) => {
+            const frontMatterStr: RegExpMatchArray|null = postStr.match(this.splitRegex);
+
+            if (!frontMatterStr)
+                throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
+
+            let postPart: string = frontMatterStr[3];
+
+            if (postPart[0] === '-') postPart = postPart.substr(3, postPart.length);
+
+            return postPart;
+        });
     }
 
     /**
@@ -63,6 +79,15 @@ export default class FrontMatter {
      * @memberof FrontMatter
      */
     public static parsePostStr(postPath: string): string {
-        return fs.readFileSync(postPath, 'utf8').replace(this.splitRegex, '');
+        const frontMatterStr: RegExpMatchArray|null = fs.readFileSync(postPath, 'utf8').match(this.splitRegex);
+
+        if (!frontMatterStr)
+            throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
+
+        let postPart: string = frontMatterStr[3];
+
+        if (postPart[0] === '-') postPart = postPart.substr(3, postPart.length);
+
+        return postPart;
     }
 }
