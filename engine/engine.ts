@@ -287,7 +287,6 @@ export default class Engine {
                 this.curDb.postData = [newPost, ...this.curDb.postData];
             }
 
-            console.log(this.curDb.postData);
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
         })
         .then(() => {
