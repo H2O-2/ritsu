@@ -46,7 +46,7 @@ class FrontMatter {
             if (!frontMatterStr)
                 throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
             let postPart = frontMatterStr[3];
-            if (postPart[0] === '-')
+            if (postPart && postPart[0] === '-')
                 postPart = postPart.substr(3, postPart.length);
             return postPart;
         });

@@ -63,7 +63,7 @@ export default class FrontMatter {
 
             let postPart: string = frontMatterStr[3];
 
-            if (postPart[0] === '-') postPart = postPart.substr(3, postPart.length);
+            if (postPart && postPart[0] === '-') postPart = postPart.substr(3, postPart.length);
 
             return postPart;
         });

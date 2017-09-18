@@ -287,6 +287,7 @@ export default class Engine {
                 this.curDb.postData = [newPost, ...this.curDb.postData];
             }
 
+            console.log(this.curDb.postData);
             fs.writeJSONSync(path.join(this.rootPath, Constants.DB_FILE), this.curDb);
         })
         .then(() => {
@@ -344,7 +345,7 @@ export default class Engine {
         .then(() => Log.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
                                 ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
         .catch((e: Error) => {
-            Log.logErr(e.message);
+            Log.logErr(e.stack);
             this.abortGen(e, generatePath);
         });
     }
@@ -603,8 +604,6 @@ export default class Engine {
         const splitDescription: RegExp= /^[\n]*([\s\S]*)<!-- description -->/;
 
         const regexArr = postStr.match(splitDescription);
-
-        console.log(regexArr);
 
         return regexArr === null ? '\n' : regexArr[1];
     }

@@ -108,7 +108,12 @@ class EjsParser {
         const curPost = this.postArr[fileIndex];
         let postData;
         return frontMatter_1.default.parsePost(path.join(this.postRoot, `${curPost.fileName}.md`))
-            .then((fileStr) => marked(fileStr))
+            .then((fileStr) => {
+            if (fileStr)
+                return marked(fileStr);
+            else
+                return;
+        })
             .then((mainContent) => {
             postData = {
                 site: this.siteConfig,

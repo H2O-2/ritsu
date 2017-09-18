@@ -142,7 +142,10 @@ class EjsParser {
         let postData: ejs.Data;
 
         return FrontMatter.parsePost(path.join(this.postRoot, `${curPost.fileName}.md`))
-        .then((fileStr: string) => marked(fileStr))
+        .then((fileStr: string) => {
+            if (fileStr) return marked(fileStr);
+            else return;
+        })
         .then((mainContent: string) => {
             postData = {
                 site: this.siteConfig,

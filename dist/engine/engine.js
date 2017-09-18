@@ -242,6 +242,7 @@ class Engine {
                 // https://stackoverflow.com/a/39531492/7837815
                 this.curDb.postData = [newPost, ...this.curDb.postData];
             }
+            console.log(this.curDb.postData);
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
         })
             .then(() => {
@@ -296,7 +297,7 @@ class Engine {
             .then(() => log_1.default.logInfo(`Blog successfully generated in ${chalk.underline.blue(generatePathRel)} directory!` +
             ` Run \`${chalk.blue('ritsu deploy')}\` to deploy blog.`))
             .catch((e) => {
-            log_1.default.logErr(e.message);
+            log_1.default.logErr(e.stack);
             this.abortGen(e, generatePath);
         });
     }
@@ -535,7 +536,6 @@ class Engine {
     findDescription(postStr) {
         const splitDescription = /^[\n]*([\s\S]*)<!-- description -->/;
         const regexArr = postStr.match(splitDescription);
-        console.log(regexArr);
         return regexArr === null ? '\n' : regexArr[1];
     }
     /**
