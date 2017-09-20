@@ -7,7 +7,7 @@ siteName: 'Kawaisou' # the name of your blog
 siteDescription: 'Place for my thoughts' # description of the blog
 author: 'Kawai Ritsu' # the name of author
 authorDescription: '趣味は読書です'
-siteIcon: 'img/favicon.ico' # the path to site icon
+siteIcon: '/res/img/favicon.ico' # the path to site icon
 createTime: '2017' # creation time of the site
 avatar: 'img/avatar.jpg' # avatar of user
 personalPage: '#' # personal page of user

@@ -214,16 +214,16 @@ class Engine {
                 year: postTime.year().toString(),
                 day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
-                description: frontMatter.description ? frontMatter.description :
+                description: frontMatter.description ? marked(frontMatter.description) :
                     marked(this.findDescription(frontMatter_1.default.parsePostStr(postPath))),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
-                prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
-                nextPost: null,
+                prevPost: null,
+                nextPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
             };
             if (this.curDb.postData.length > 0)
-                this.curDb.postData[0].nextPost = newPost.fileName;
+                this.curDb.postData[0].prevPost = newPost.fileName;
             if (date) {
                 const curDate = newPost.date;
                 let published = false;
@@ -242,7 +242,6 @@ class Engine {
                 // https://stackoverflow.com/a/39531492/7837815
                 this.curDb.postData = [newPost, ...this.curDb.postData];
             }
-            console.log(this.curDb.postData);
             fs.writeJSONSync(path.join(this.rootPath, constants_1.default.DB_FILE), this.curDb);
         })
             .then(() => {

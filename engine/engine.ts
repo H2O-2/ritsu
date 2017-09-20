@@ -257,16 +257,16 @@ export default class Engine {
                 year: postTime.year().toString(),
                 day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
-                description: frontMatter.description ? frontMatter.description :
+                description: frontMatter.description ? marked(frontMatter.description) :
                                                        marked(this.findDescription(FrontMatter.parsePostStr(postPath))),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
-                prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
-                nextPost: null,
+                prevPost: null,
+                nextPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
             };
 
-            if (this.curDb.postData.length > 0) this.curDb.postData[0].nextPost = newPost.fileName;
+            if (this.curDb.postData.length > 0) this.curDb.postData[0].prevPost = newPost.fileName;
 
             if (date) {
                 const curDate: number = newPost.date;

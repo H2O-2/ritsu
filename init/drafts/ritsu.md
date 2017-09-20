@@ -1,7 +1,7 @@
 ---
 title: Ritsu # Enter your title here
 description: Ritsu, simple and fast. # Enter your description for your post here. You can also comment out this line and add <!-- description --> in the post to mark the exerpt as description.
-tags: #Enter your tags here, one tag per line with a dash (-) in front
+tags: # Enter your tags here, one tag per line with a dash (-) in front
     - Ritsu
 # headImg: img/head.jpg # This will override og:img option in site-config.yaml
 ---
