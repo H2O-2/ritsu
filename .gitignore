@@ -36,15 +36,11 @@
 ehthumbs.db
 Thumbs.db
 
-# JetBrain #
-######################
-.idea/
-
 # package control #
 ######################
-bower_components/
 node_modules/
 
+dist/
 new-blog/
 test.*
 .deploy.git/

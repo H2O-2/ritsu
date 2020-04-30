@@ -37,18 +37,18 @@ export default class Engine {
     private defaultSiteConfigPath: string;
     private defaultThemeConfigPath: string;
     private initFilePath: string;
-    private rootPath: string;
-    private draftPath: string;
-    private postPath: string;
-    private templatePath: string;
-    private themePath: string;
-    private trashPath: string;
-    private curTheme: string = Constants.DEFAULT_THEME;
-    private curDb: SiteDb;
-    private defaultSiteConfig: SiteConfig;
-    private customSiteConfig: SiteConfig;
-    private defaultThemeConfig: ThemeConfig;
-    private customThemeConfig: ThemeConfig;
+
+    private rootPath!: string;
+    private draftPath!: string;
+    private postPath!: string;
+    private templatePath!: string;
+    private themePath!: string;
+    private trashPath!: string;
+    private curDb!: SiteDb;
+    private defaultSiteConfig!: SiteConfig;
+    private customSiteConfig!: SiteConfig;
+    private defaultThemeConfig!: ThemeConfig;
+    private customThemeConfig!: ThemeConfig;
 
     constructor() {
         this.engineRootPath = path.join(__dirname, '..' + path.sep + '..');
@@ -510,7 +510,7 @@ export default class Engine {
      */
     private readDb(): Promise<void> {
         return this.findDb(process.cwd())
-            .then((data: SiteDb) => {
+            .then((data: SiteDb | void) => {
                 if (!data)
                     throw new Error(`Please execute this command in blog directory or run` +
                                     ` \`${chalk.cyan('ritsu init')}\` first`);

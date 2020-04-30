@@ -146,7 +146,7 @@ class EjsParser {
             if (fileStr) return marked(fileStr);
             else return;
         })
-        .then((mainContent: string) => {
+        .then((mainContent: string | undefined) => {
             postData = {
                 site: this.siteConfig,
                 theme: this.themeConfig,
@@ -304,7 +304,7 @@ class EjsParser {
      */
     private renderFile(filePath: string, data: ejs.Data): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            ejs.renderFile(filePath, data, (renderError: Error, htmlStr: string) => {
+            ejs.renderFile(filePath, data, (renderError: Error | null, htmlStr: string) => {
                 if (renderError) {
                     reject(renderError);
                 } else {
