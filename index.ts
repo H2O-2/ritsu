@@ -5,7 +5,7 @@ import * as process from 'process';
 
 import Engine from './engine/engine';
 
-const VER: string = 'v0.0.1';
+const VER: string = 'v2.0.0';
 const DESCRIPTION: string = 'For Ritsu 📖\n\n  A simple static site generator.';
 
 
