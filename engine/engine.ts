@@ -184,6 +184,7 @@ export default class Engine {
         const dneError: Error = new Error(`Post ${chalk.cyan(postName)} is either not published or does not exist.`);
 
         this.readDb()
+        .then(() => this.updateConfig())
         .then(() => {
             if (!fs.pathExistsSync(path.join(this.postPath, postFile))) {
                 throw dneError;
@@ -193,7 +194,12 @@ export default class Engine {
             }
         })
         .then(() => Log.logInfo('Deleting...'))
-        .then(() => fs.move(path.join(this.postPath, postFile), path.join(this.trashPath, postFile)))
+        .then(() => {
+            fs.move(path.join(this.postPath, postFile), path.join(this.trashPath, postFile))
+
+            // Remove generated webpage
+            fs.remove(path.join(Constants.DEFAULT_GENERATE_DIR, this.customSiteConfig.postDir, postName));
+        })
         .then(() => {
             const postDataArr: Post[] = this.curDb.postData;
 
@@ -310,7 +316,8 @@ export default class Engine {
         let generatePath: string;
         let generatePathRel: string;
 
-        if (!dirName) dirName = Constants.DEFAULT_GENERATE_DIR;
+        // Right now generate does not support customized directory name
+        dirName = Constants.DEFAULT_GENERATE_DIR;
 
         this.readDb()
         .then(() => this.updateConfig())
