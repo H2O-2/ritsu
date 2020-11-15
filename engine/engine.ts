@@ -12,7 +12,7 @@ import * as process from 'process';
 import Constants from './constants';
 import DuplicateError from './duplicateError';
 import EjsParser from './ejsParser';
-import FrontMatter from './frontMatter';
+import FrontMatter, { FrontMatterObj } from './frontMatter';
 import Log from './log';
 import Post from './post';
 import SassParser from './sassParser';
@@ -83,8 +83,8 @@ export default class Engine {
         .then(() => fs.copySync(this.initFilePath, this.rootPath))
         .then(() => fs.copySync(this.defaultSiteConfigPath, path.join(this.rootPath, Constants.DEFAULT_SITE_CONFIG)))
         .then(() => fs.copySync(this.defaultThemeConfigPath, path.join(this.rootPath, Constants.DEFAULT_THEME_CONFIG)))
-        .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')))
-        .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')))
+        .then(() => this.defaultSiteConfig = yaml.safeLoad(fs.readFileSync(this.defaultSiteConfigPath, 'utf8')) as SiteConfig)
+        .then(() => this.defaultThemeConfig = yaml.safeLoad(fs.readFileSync(this.defaultThemeConfigPath, 'utf8')) as ThemeConfig)
         .then(() =>
             dbData = {
                 rootPath: this.rootPath,
@@ -251,7 +251,8 @@ export default class Engine {
         })
         .then(() => fs.move(draftPath, path.join(this.postPath, postFile)))
         .then(() => FrontMatter.parseFrontMatter(postPath))
-        .then((frontMatter) => {
+        .then((obj: string | object | FrontMatterObj | undefined) => {
+            const frontMatter: FrontMatterObj = (obj as FrontMatterObj);
             const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
             const postTime: moment.Moment = date ? moment(date) : moment();
             const newPost: Post = {
@@ -500,11 +501,11 @@ export default class Engine {
      * @returns {Promise<void>}
      * @memberof Engine
      */
-    private updateConfig(): Promise<void> {
+    private updateConfig(): Promise<string | void | object | null> {
         return fs.readFile(Constants.DEFAULT_SITE_CONFIG, 'utf8')
-        .then((siteConfigStr: string) => this.customSiteConfig = yaml.safeLoad(siteConfigStr))
+        .then((siteConfigStr: string) => this.customSiteConfig = yaml.safeLoad(siteConfigStr) as SiteConfig)
         .then(() => fs.readFile(Constants.DEFAULT_THEME_CONFIG, 'utf8'))
-        .then((themeConfigStr: string) => this.customThemeConfig = yaml.safeLoad(themeConfigStr));
+        .then((themeConfigStr: string) => this.customThemeConfig = yaml.safeLoad(themeConfigStr) as ThemeConfig);
     }
 
     /**

@@ -28,7 +28,7 @@ export default class FrontMatter {
      * @returns {FrontMatterObj}
      * @memberof FrontMatter
      */
-    public static parseFrontMatter(postPath: string): Promise<FrontMatterObj> {
+    public static parseFrontMatter(postPath: string): Promise<string | object | FrontMatterObj | undefined> {
         return fs.readFile(postPath, 'utf8')
         .then((postStr: string) => {
             const frontMatterStr: RegExpMatchArray|null = postStr.match(this.splitRegex);
