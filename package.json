@@ -1,6 +1,6 @@
 {
   "name": "ritsu",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Static site generator made by TypeScript & Node.js",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
