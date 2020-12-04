@@ -4,8 +4,8 @@ import * as program from 'commander';
 import * as process from 'process';
 
 import Engine from './engine/engine';
+import { version } from './package.json'
 
-const VER: string = process.env.npm_package_version as string;
 const DESCRIPTION: string = 'For Ritsu 📖\n\n  A simple static site generator.';
 
 
@@ -60,7 +60,7 @@ program.command('update [dirname]').alias('u').description('Update Site').action
     engine.update(dirName);
 })
 
-program.version(VER).description(DESCRIPTION).parse(process.argv);
+program.version(version).description(DESCRIPTION).parse(process.argv);
 
 if (!process.argv.slice(2).length) {
     program.description(DESCRIPTION).help();
