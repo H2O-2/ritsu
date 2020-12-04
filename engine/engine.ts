@@ -4,7 +4,7 @@ import * as spawn from 'cross-spawn';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import * as marked from 'marked';
-import * as moment from 'moment';
+import * as dayjs from 'dayjs'
 import * as path from 'path';
 import * as process from 'process';
 
@@ -252,8 +252,8 @@ export default class Engine {
         .then(() => FrontMatter.parseFrontMatter(postPath))
         .then((obj: string | object | FrontMatterObj | undefined) => {
             const frontMatter: FrontMatterObj = (obj as FrontMatterObj);
-            const urlRegex: RegExp = /[ ;/?:@=&<>#\%\{\}\|\\\^~\[\]]/g;
-            const postTime: moment.Moment = date ? moment(date) : moment();
+            const urlRegex: RegExp = /[ ;?:@=&<>#%{}|\\^~[\]]/g;
+            const postTime: dayjs.Dayjs = date ? dayjs(date) : dayjs();
             const newPost: Post = {
                 fileName: postName,
                 urlName: postName.replace(urlRegex, '-'),
@@ -465,7 +465,7 @@ export default class Engine {
 
             this.git(['add', '-A']);
             this.git(['commit', '-m', `${this.customSiteConfig.commitMsg}` +
-                     `${moment().format(this.customSiteConfig.timeFormat)}`]);
+                     `${dayjs().format(this.customSiteConfig.timeFormat)}`]);
             this.git(['push', '-u', this.customSiteConfig.repoURL,
                         `HEAD:${this.customSiteConfig.branch ? this.customSiteConfig.branch : 'master'}`, '--force']);
             Log.logInfo('Deployment complete!');
