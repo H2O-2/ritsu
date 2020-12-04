@@ -5,7 +5,7 @@ import * as process from 'process';
 
 import Engine from './engine/engine';
 
-const VER: string = 'v2.0.0';
+const VER: string = process.env.npm_package_version as string;
 const DESCRIPTION: string = 'For Ritsu 📖\n\n  A simple static site generator.';
 
 
