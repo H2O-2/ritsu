@@ -2,7 +2,6 @@ import * as chalk from 'chalk';
 import * as commandExist from 'command-exists';
 import * as spawn from 'cross-spawn';
 import * as fs from 'fs-extra';
-import * as hljs from 'highlight.js';
 import * as yaml from 'js-yaml';
 import * as marked from 'marked';
 import * as moment from 'moment';

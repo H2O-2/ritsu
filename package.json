@@ -7,12 +7,13 @@
   "bin": {
     "ritsu": "dist/index.js"
   },
+  "comment": {
+    "scripts": "Scripts are run from the root of the module, regardless of what your current working directory is when you call npm run. Refer to man npm-run-script"
+  },
   "scripts": {
     "build": "tsc",
     "ejs": "ejs",
-    "ritsu": "tsc; node dist/index",
-    "engine": "tsc; node dist/engine/engine",
-    "test": "tsc; node dist/engine/test"
+    "ritsu": "tsc; cd new-blog; node ../dist/index"
   },
   "repository": {
     "type": "git",
