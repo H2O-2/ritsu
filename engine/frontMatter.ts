@@ -34,7 +34,7 @@ export default class FrontMatter {
             const frontMatterStr: RegExpMatchArray|null = postStr.match(this.splitRegex);
 
             if (!frontMatterStr)
-                throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
+                throw new Error(`Where's the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
 
             let frontMatter = frontMatterStr[2];
 
@@ -59,7 +59,7 @@ export default class FrontMatter {
             const frontMatterStr: RegExpMatchArray|null = postStr.match(this.splitRegex);
 
             if (!frontMatterStr)
-                throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
+                throw new Error(`Where's the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
 
             let postPart: string = frontMatterStr[3];
 
@@ -82,7 +82,7 @@ export default class FrontMatter {
         const frontMatterStr: RegExpMatchArray|null = fs.readFileSync(postPath, 'utf8').match(this.splitRegex);
 
         if (!frontMatterStr)
-            throw new Error(`Where\'s the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
+            throw new Error(`Where's the front matter of post ${chalk.black.underline(postPath)} →_→ ?`);
 
         let postPart: string = frontMatterStr[3];
 

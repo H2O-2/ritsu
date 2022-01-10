@@ -178,7 +178,7 @@ export default class Engine {
      * @param {string} postName
      * @memberof Engine
      */
-    public delete(postName: string) {
+    public delete(postName: string): void {
         const postFile: string = `${postName}.md`;
         const dneError: Error = new Error(`Post ${chalk.cyan(postName)} is either not published or does not exist.`);
 
@@ -228,7 +228,7 @@ export default class Engine {
      * @param {string} [date]
      * @memberof Engine
      */
-    public publish(postName: string, date?: string, outputInfo: boolean = true) {
+    public publish(postName: string, date?: string, outputInfo: boolean = true): void {
         const postFile: string = `${postName}.md`;
 
         let draftPath: string;
@@ -263,16 +263,17 @@ export default class Engine {
                 year: postTime.year().toString(),
                 day: postTime.format(this.customSiteConfig.archiveTimeFormat),
                 tags: frontMatter.tags,
-                description: frontMatter.description ? marked(frontMatter.description) :
+                // TODO: Ban findDescription and allow only pure text
+                description: frontMatter.description ? frontMatter.description :
                                                        marked(this.findDescription(FrontMatter.parsePostStr(postPath))),
                 headImg: frontMatter.headImg ? frontMatter.headImg : null,
                 pageUrl: this.customSiteConfig.postDir,
                 canonical: `/${this.customSiteConfig.postDir}/${postName}/`,
-                prevPost: null,
-                nextPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
+                prevPost: this.curDb.postData.length > 0 ? this.curDb.postData[0].fileName : null,
+                nextPost: null,
             };
 
-            if (this.curDb.postData.length > 0) this.curDb.postData[0].prevPost = newPost.fileName;
+            if (this.curDb.postData.length > 0) this.curDb.postData[0].nextPost = newPost.fileName;
 
             if (date) {
                 const curDate: number = newPost.date;
@@ -310,7 +311,7 @@ export default class Engine {
      * @param {string} [dirName]
      * @memberof Engine
      */
-    public generate(dirName: string) {
+    public generate(dirName: string): void {
         let ejsParser: EjsParser;
         let sassParser: SassParser;
         let generatePath: string;
@@ -356,7 +357,7 @@ export default class Engine {
         });
     }
 
-    public update(dirName: string) {
+    public update(dirName: string): void {
         let ejsParser: EjsParser;
         let updatePath: string;
         let backupPath: string;
@@ -403,7 +404,7 @@ export default class Engine {
      * @param {string} dirName
      * @memberof Engine
      */
-    public purge(dirName: string) {
+    public purge(dirName: string): void {
         let deletePath: string;
 
         this.readDb()
@@ -422,7 +423,7 @@ export default class Engine {
         .catch((e: Error) => Log.logErr(e.message));
     }
 
-    public deploy(dirName: string) {
+    public deploy(dirName: string): void {
         let deployPath: string;
         let generatePath: string;
 

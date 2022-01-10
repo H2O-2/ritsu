@@ -44,12 +44,34 @@ class EjsParser {
             theme: this.themeConfig,
         };
 
+        const renderer: marked.Renderer = new marked.Renderer();
+        renderer.image = (href: string | null, title: string | null, text: string) => {
+            // From https://github.com/markedjs/marked/blob/v2.1.3/src/Renderer.js
+            // TODO: Sanitize URL
+
+            if (href === null) {
+                return text;
+            }
+
+            let out = `<figure><img src="${href}" alt="${text}"`;
+            if (title) {
+                out += ` title="${title}"`;
+            }
+            if (text) {
+                out += `/><figcaption>${text}</figcaption></figure>`;
+            } else {
+                out += `/></figure>`
+            }
+            return out;
+        }
+
         // reference: http://shuheikagawa.com/blog/2015/09/21/using-highlight-js-with-marked/
         marked.setOptions({
             langPrefix: 'hljs ',
             highlight(code) {
                 return hljs.highlightAuto(code).value;
             },
+            renderer,
         });
     }
 
@@ -143,8 +165,9 @@ class EjsParser {
 
         return FrontMatter.parsePost(path.join(this.postRoot, `${curPost.fileName}.md`))
         .then((fileStr: string) => {
-            if (fileStr) return marked(fileStr);
-            else return;
+            if (fileStr) {
+                return marked(fileStr);
+            }
         })
         .then((mainContent: string | undefined) => {
             postData = {
